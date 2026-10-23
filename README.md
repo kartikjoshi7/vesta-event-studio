@@ -9,7 +9,7 @@
 ![Repo Size](https://img.shields.io/badge/Repo%20Size-%3C%201%20MB%20(291%20KB)-brightgreen?style=flat-square)
 
 **GitHub Repository:** [https://github.com/kartikjoshi7/vesta-event-studio](https://github.com/kartikjoshi7/vesta-event-studio)  
-**Live Production URL:** *(to be updated upon Vercel deployment)*
+**Live Production URL:** [https://vesta-event-studio.vercel.app](https://vesta-event-studio.vercel.app)  
 
 ---
 
