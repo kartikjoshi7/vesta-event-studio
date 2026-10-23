@@ -338,9 +338,9 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-[11px]">
-              <Sparkles className="w-3 h-3 text-vesta-gold" />
-              Vesta Event Studio v0.3.0 · GenAI Celebration OS
+            <span className="flex items-center gap-1.5 text-[11px] font-medium text-vesta-muted">
+              <span className="w-1.5 h-1.5 rounded-full bg-vesta-gold" />
+              Vesta Event Studio · Enterprise Celebration & Event Planning OS
             </span>
           </div>
         </div>
