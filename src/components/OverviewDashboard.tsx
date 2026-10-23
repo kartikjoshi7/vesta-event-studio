@@ -161,6 +161,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               {isEditingMetrics ? (
                 <input
                   type="number"
+                  aria-label="Total event budget"
                   value={budgetInput}
                   onChange={(e) => setBudgetInput(e.target.value)}
                   className="w-full px-2 py-1 rounded bg-vesta-card border border-vesta-iris text-xs text-vesta-text font-mono"
@@ -181,6 +182,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
               {isEditingMetrics ? (
                 <input
                   type="number"
+                  aria-label="Total guest count"
                   value={guestsInput}
                   onChange={(e) => setGuestsInput(e.target.value)}
                   className="w-full px-2 py-1 rounded bg-vesta-card border border-vesta-iris text-xs text-vesta-text font-mono"

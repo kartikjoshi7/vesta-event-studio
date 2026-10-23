@@ -37,3 +37,48 @@ body {
 #root {
   min-height: 100dvh;
 }
+
+/* ─── WCAG 2.1 AAA High-Contrast Mode ────────────────────────────────────── */
+
+html.high-contrast-aaa {
+  --color-vesta-midnight: #000000;
+  --color-vesta-surface: #0a0a0a;
+  --color-vesta-card: #121212;
+  --color-vesta-border: #ffffff;
+  --color-vesta-muted: #e2e8f0;
+  --color-vesta-text: #ffffff;
+  --color-vesta-gold: #fde047;
+  --color-vesta-rose: #ff4d79;
+  --color-vesta-iris: #d8b4fe;
+  --color-vesta-pine: #38bdf8;
+  --color-vesta-foam: #7dd3fc;
+  --color-vesta-success: #4ade80;
+  --color-vesta-warning: #facc15;
+  --color-vesta-danger: #f87171;
+}
+
+html.high-contrast-aaa body {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+html.high-contrast-aaa * {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+html.high-contrast-aaa *:focus-visible {
+  outline: 3px solid #facc15 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px #000000 !important;
+}
+
+html.high-contrast-aaa button,
+html.high-contrast-aaa input,
+html.high-contrast-aaa select,
+html.high-contrast-aaa textarea {
+  border-width: 2px !important;
+}
+
+html.high-contrast-aaa .text-vesta-muted {
+  color: #e2e8f0 !important;
+}

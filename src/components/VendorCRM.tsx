@@ -239,10 +239,11 @@ export const VendorCRM: React.FC<VendorCRMProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-vendor-name" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Vendor / Business Name
               </label>
               <input
+                id="new-vendor-name"
                 type="text"
                 required
                 placeholder="e.g. Royal Haveli AV Systems"
@@ -253,8 +254,9 @@ export const VendorCRM: React.FC<VendorCRMProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">Category</label>
+              <label htmlFor="new-vendor-cat" className="block text-[11px] font-medium text-vesta-muted mb-1">Category</label>
               <input
+                id="new-vendor-cat"
                 type="text"
                 required
                 placeholder="e.g. AV & Production"
@@ -265,10 +267,11 @@ export const VendorCRM: React.FC<VendorCRMProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-vendor-email" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Contact Email
               </label>
               <input
+                id="new-vendor-email"
                 type="email"
                 placeholder="contact@vendor.com"
                 value={newEmail}
@@ -278,10 +281,11 @@ export const VendorCRM: React.FC<VendorCRMProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-vendor-cost" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Estimated Cost (₹)
               </label>
               <input
+                id="new-vendor-cost"
                 type="number"
                 min="0"
                 step="5000"
@@ -293,10 +297,11 @@ export const VendorCRM: React.FC<VendorCRMProps> = ({
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+            <label htmlFor="new-vendor-notes" className="block text-[11px] font-medium text-vesta-muted mb-1">
               Internal Vetting Notes
             </label>
             <input
+              id="new-vendor-notes"
               type="text"
               placeholder="e.g. Recommended by venue manager. Holds 10kW sound license."
               value={newNotes}

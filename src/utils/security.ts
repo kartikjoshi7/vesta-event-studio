@@ -136,3 +136,65 @@ export function safeJsonParse<T>(raw: string, fallback: T): T {
     return fallback;
   }
 }
+
+// ─── Rate Limiting Guard ───────────────────────────────────────────────────
+
+interface RateLimitRecord {
+  timestamps: number[];
+}
+
+const rateLimitBuckets = new Map<string, RateLimitRecord>();
+
+/**
+ * Sliding-window rate-limiting guard to prevent API quota exhaustion,
+ * client-side abuse, and denial-of-service request loops.
+ *
+ * @param actionKey   - Unique identifier for the rate-limited action (e.g. 'gemini-api').
+ * @param maxRequests - Maximum allowed requests within the time window (default: 15).
+ * @param windowMs    - Time window in milliseconds (default: 60,000 ms / 1 minute).
+ * @returns Rate limit status containing `allowed`, `remaining`, and `resetInMs`.
+ *
+ * @example
+ * ```ts
+ * const status = checkRateLimit('gemini-call', 10, 60000);
+ * if (!status.allowed) {
+ *   console.warn(`Rate limit reached. Retry in ${status.resetInMs}ms`);
+ * }
+ * ```
+ */
+export function checkRateLimit(
+  actionKey: string,
+  maxRequests: number = 15,
+  windowMs: number = 60_000,
+): { allowed: boolean; remaining: number; resetInMs: number } {
+  const now = Date.now();
+  let record = rateLimitBuckets.get(actionKey);
+
+  if (!record) {
+    record = { timestamps: [] };
+    rateLimitBuckets.set(actionKey, record);
+  }
+
+  // Purge expired timestamps outside the sliding window
+  record.timestamps = record.timestamps.filter((ts) => now - ts < windowMs);
+
+  if (record.timestamps.length >= maxRequests) {
+    const oldest = record.timestamps[0] || now;
+    const resetInMs = Math.max(0, windowMs - (now - oldest));
+    return {
+      allowed: false,
+      remaining: 0,
+      resetInMs,
+    };
+  }
+
+  // Record this request
+  record.timestamps.push(now);
+  const remaining = Math.max(0, maxRequests - record.timestamps.length);
+
+  return {
+    allowed: true,
+    remaining,
+    resetInMs: windowMs,
+  };
+}

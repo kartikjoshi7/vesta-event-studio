@@ -1,9 +1,11 @@
 /**
- * @fileoverview Personalized Ideation Studio for Vesta Event Studio.
+ * @fileoverview Personalized Ideation Studio for Vesta Event Studio (Phase 4).
  *
- * Provides vertical-tailored GenAI inspiration matching active persona constraints
- * (budget tier, guest count, setting, season, dietary restrictions), category filtering,
- * and 1-click timeline & audit log injection.
+ * Provides:
+ * 1. Active persona constraints & contextual AI synthesis
+ * 2. Curated Event Color Palette with 1-click copy hex codes
+ * 3. AI Invitation & Toast Speech Copywriter with live generator & clipboard copy
+ * 4. Filterable Idea Cards Grid with 1-click timeline & audit log injection
  */
 
 import React, { useState } from 'react';
@@ -15,6 +17,12 @@ import {
   Coins,
   Compass,
   Zap,
+  Palette,
+  Copy,
+  Check,
+  Mail,
+  Mic,
+  FileText,
 } from 'lucide-react';
 import type { EventProject, PersonalizedIdea, IdeaCategory } from '../types/event';
 import { sanitizeUserInput } from '../utils/security';
@@ -26,6 +34,12 @@ interface IdeationStudioProps {
   onAddGeneratedIdeas: (ideas: PersonalizedIdea[]) => void;
 }
 
+interface ColorSwatch {
+  name: string;
+  hex: string;
+  role: string;
+}
+
 export const IdeationStudio: React.FC<IdeationStudioProps> = ({
   project,
   onApplyIdea,
@@ -35,6 +49,13 @@ export const IdeationStudio: React.FC<IdeationStudioProps> = ({
   const [customPrompt, setCustomPrompt] = useState('');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [synthesisStatusMessage, setSynthesisStatusMessage] = useState('');
+
+  // Palette copy state
+  const [copiedHex, setCopiedHex] = useState<string | null>(null);
+
+  // Copywriter state
+  const [copywriterMode, setCopywriterMode] = useState<'invitation' | 'toast'>('invitation');
+  const [copiedCopyText, setCopiedCopyText] = useState(false);
 
   const quickPrompts = [
     'Zero-Waste Luxury Decor',
@@ -54,6 +75,79 @@ export const IdeationStudio: React.FC<IdeationStudioProps> = ({
     { label: 'Sustainability', value: 'sustainability' },
     { label: 'Logistics & Tech', value: 'logistics' },
   ];
+
+  // 1. Curated Palettes by Vertical
+  const palettesByVertical: Record<string, ColorSwatch[]> = {
+    wedding: [
+      { name: 'Royal Crimson', hex: '#881337', role: 'Primary Accent' },
+      { name: 'Marigold Gold', hex: '#D97706', role: 'Secondary Accent' },
+      { name: 'Ivory Silk', hex: '#FDF4E3', role: 'Base Linen' },
+      { name: 'Haveli Navy', hex: '#1E3A8A', role: 'Contrast Border' },
+      { name: 'Forest Emerald', hex: '#065F46', role: 'Floral Foliage' },
+    ],
+    birthday: [
+      { name: 'Rooftop Obsidian', hex: '#0F172A', role: 'Base Midnight' },
+      { name: 'Neon Rose', hex: '#F43F5E', role: 'Vibrant Highlight' },
+      { name: 'Electric Cyan', hex: '#06B6D4', role: 'Cocktail Glow' },
+      { name: 'Deep Violet', hex: '#A855F7', role: 'DJ Stage Ambient' },
+      { name: 'Laser Gold', hex: '#FACC15', role: 'Metallic Trim' },
+    ],
+    community: [
+      { name: 'Eco Forest', hex: '#047857', role: 'Sustainability Primary' },
+      { name: 'Sky Innovation', hex: '#0284C7', role: 'Tech Accent' },
+      { name: 'Solar Amber', hex: '#F59E0B', role: 'Stage Warmth' },
+      { name: 'Slate Neutral', hex: '#475569', role: 'Signage & Badges' },
+      { name: 'Clean Pearl', hex: '#F8FAFC', role: 'Exhibit Floor' },
+    ],
+  };
+
+  const currentPalette =
+    palettesByVertical[project.vertical] || palettesByVertical.wedding;
+
+  const handleCopyHex = async (hex: string) => {
+    try {
+      await navigator.clipboard.writeText(hex);
+      setCopiedHex(hex);
+      setTimeout(() => setCopiedHex(null), 2500);
+    } catch {
+      // Fallback
+    }
+  };
+
+  // 2. Dynamic Copywriting Text
+  const formattedDate = new Date(project.date).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const generatedInvitationText =
+    project.vertical === 'wedding'
+      ? `✨ Together with their families,\n${project.personaName} cordially invite you to celebrate the joyous union of\n${project.title}\n\n📅 Date: ${formattedDate}\n📍 Venue: ${project.location}\n👗 Dress Code / Vibe: ${project.vibeTags.join(', ')}\n\nKindly RSVP to celebrate love, tradition, and eternal memories.`
+      : project.vertical === 'birthday'
+      ? `🎉 You're invited to celebrate!\nJoin us for ${project.title} hosted by ${project.personaName}!\n\n📅 Date: ${formattedDate}\n📍 Location: ${project.location}\n🍸 Atmosphere: ${project.vibeTags.join(' · ')}\n\nGet ready for extraordinary music, bespoke drinks, and an unforgettable celebration. RSVP today!`
+      : `🌱 You are invited to attend:\n${project.title}\nConvened by ${project.personaName}\n\n📅 Date: ${formattedDate}\n📍 Venue: ${project.location}\n🎯 Theme: ${project.vibeTags.join(' | ')}\n\nJoin 500+ leaders, innovators, and sustainability champions for impactful keynotes, interactive exhibits, and collaborative networking. Register your badge now!`;
+
+  const generatedToastText =
+    project.vertical === 'wedding'
+      ? `Dear family and distinguished friends,\n\nStanding here today for ${project.title}, my heart is filled with gratitude. To everyone who traveled from near and far to ${project.location} to be with ${project.personaName}—thank you. May this celebration be blessed with laughter, timeless rituals, and a lifetime of happiness.\n\nPlease raise your glasses with me to love, family, and new beginnings!`
+      : project.vertical === 'birthday'
+      ? `Welcome everyone!\n\nThank you for turning up tonight to celebrate ${project.title}! Looking around this rooftop, seeing all our favorite people together in ${project.location} means the world to ${project.personaName}.\n\nHere is to milestone memories, bold dreams, and dancing until the sunrise. Cheers!`
+      : `Honored delegates, keynote speakers, and partners,\n\nWelcome to ${project.title}. Today in ${project.location}, we gather with a shared mission: shaping sustainable technology for our collective future. Over the next full day, let us challenge assumptions, forge lasting partnerships, and turn vision into measurable action.\n\nThank you for your leadership and participation!`;
+
+  const activeCopyContent =
+    copywriterMode === 'invitation' ? generatedInvitationText : generatedToastText;
+
+  const handleCopyCopywriterText = async () => {
+    try {
+      await navigator.clipboard.writeText(activeCopyContent);
+      setCopiedCopyText(true);
+      setTimeout(() => setCopiedCopyText(false), 2500);
+    } catch {
+      // Fallback
+    }
+  };
 
   const filteredIdeas = project.savedIdeas.filter((idea) => {
     if (selectedCategory !== 'all' && idea.category !== selectedCategory) {
@@ -117,7 +211,7 @@ export const IdeationStudio: React.FC<IdeationStudioProps> = ({
           <div>
             <h1 className="text-xl font-bold text-vesta-text flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-vesta-gold" />
-              Personalized Ideation Studio
+              Personalized Ideation & Creative Studio
             </h1>
             <p className="text-xs text-vesta-muted mt-0.5">
               GenAI synthesis grounded in your physical setting, guest scale, budget ceiling, and dietary preferences.
@@ -232,6 +326,159 @@ export const IdeationStudio: React.FC<IdeationStudioProps> = ({
           <div aria-live="polite" className="text-xs text-vesta-foam font-mono pt-1">
             {synthesisStatusMessage}
           </div>
+        </div>
+      </section>
+
+      {/* ─── Curated Event Color Palette Bar ────────────────────────────── */}
+      <section
+        aria-label="Curated Event Color Palette"
+        className="rounded-3xl bg-vesta-card border border-vesta-border p-6 shadow-xl space-y-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-vesta-gold/20 text-vesta-gold border border-vesta-gold/30">
+              <Palette className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-vesta-text">
+                Curated Event Color Palette ({project.vertical.toUpperCase()})
+              </h2>
+              <p className="text-xs text-vesta-muted">
+                Harmonious hex color tokens tailored to this celebration aesthetic. Click any swatch to copy.
+              </p>
+            </div>
+          </div>
+
+          <div aria-live="polite" className="text-xs text-vesta-success font-mono">
+            {copiedHex && `Copied ${copiedHex} to clipboard!`}
+          </div>
+        </div>
+
+        {/* 5 Swatches Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {currentPalette.map((swatch, idx) => {
+            const isCopied = copiedHex === swatch.hex;
+
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleCopyHex(swatch.hex)}
+                aria-label={`Copy hex code ${swatch.hex} for ${swatch.name}`}
+                className="p-3 rounded-2xl bg-vesta-surface/90 border border-vesta-border hover:border-vesta-iris/40 transition-all text-left space-y-2.5 group focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+              >
+                {/* Visual Swatch */}
+                <div
+                  className="w-full h-12 rounded-xl shadow-inner border border-white/10 group-hover:scale-105 transition-transform flex items-end justify-end p-1.5"
+                  style={{ backgroundColor: swatch.hex }}
+                >
+                  <span className="p-1 rounded-md bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isCopied ? <Check className="w-3 h-3 text-vesta-success" /> : <Copy className="w-3 h-3" />}
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-vesta-text group-hover:text-vesta-gold transition-colors truncate">
+                    {swatch.name}
+                  </div>
+                  <div className="text-[10px] font-mono text-vesta-foam mt-0.5">
+                    {swatch.hex}
+                  </div>
+                  <div className="text-[9px] text-vesta-muted uppercase tracking-wider mt-0.5 truncate">
+                    {swatch.role}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ─── AI Invitation & Toast Speech Copywriter ───────────────────── */}
+      <section
+        aria-label="AI Copywriter"
+        className="rounded-3xl bg-vesta-card border border-vesta-border p-6 shadow-xl space-y-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-vesta-iris/20 text-vesta-iris border border-vesta-iris/30">
+              <FileText className="w-4 h-4 text-vesta-gold" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-vesta-text">
+                AI Invitation & Toast Speech Copywriter
+              </h2>
+              <p className="text-xs text-vesta-muted">
+                Synthesizes tone-matched guest invitation copy and keynote toast speeches tailored to your event details.
+              </p>
+            </div>
+          </div>
+
+          {/* Mode Switcher */}
+          <div role="tablist" aria-label="Copywriter format selection" className="flex items-center gap-1.5 p-1 rounded-xl bg-vesta-surface border border-vesta-border">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={copywriterMode === 'invitation'}
+              onClick={() => setCopywriterMode('invitation')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                copywriterMode === 'invitation'
+                  ? 'bg-vesta-card text-vesta-gold border border-vesta-gold/30 shadow-sm'
+                  : 'text-vesta-muted hover:text-white'
+              }`}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Guest Invitation</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={copywriterMode === 'toast'}
+              onClick={() => setCopywriterMode('toast')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                copywriterMode === 'toast'
+                  ? 'bg-vesta-card text-vesta-iris border border-vesta-iris/30 shadow-sm'
+                  : 'text-vesta-muted hover:text-white'
+              }`}
+            >
+              <Mic className="w-3.5 h-3.5" />
+              <span>Host Toast Speech</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Copywriter Text Area */}
+        <div className="relative">
+          <label htmlFor="copywriter-textarea" className="sr-only">
+            Generated {copywriterMode === 'invitation' ? 'Guest Invitation' : 'Host Toast Speech'}
+          </label>
+          <textarea
+            id="copywriter-textarea"
+            readOnly
+            value={activeCopyContent}
+            rows={7}
+            className="w-full p-4 rounded-2xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-vesta-iris resize-none"
+          />
+
+          <button
+            type="button"
+            onClick={handleCopyCopywriterText}
+            aria-label="Copy invitation or toast text to clipboard"
+            className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-vesta-card/90 hover:bg-vesta-border border border-vesta-border text-xs font-semibold text-vesta-text hover:text-white transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+          >
+            {copiedCopyText ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-vesta-success" />
+                <span className="text-vesta-success">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-vesta-gold" />
+                <span>Copy to Clipboard</span>
+              </>
+            )}
+          </button>
         </div>
       </section>
 

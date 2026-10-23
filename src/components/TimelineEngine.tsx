@@ -223,10 +223,11 @@ export const TimelineEngine: React.FC<TimelineEngineProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="lg:col-span-2">
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-milestone-title" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Milestone Title
               </label>
               <input
+                id="new-milestone-title"
                 type="text"
                 required
                 placeholder="e.g. Sangeet Stage & Audio Soundcheck"
@@ -237,10 +238,11 @@ export const TimelineEngine: React.FC<TimelineEngineProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-milestone-category" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Category
               </label>
               <input
+                id="new-milestone-category"
                 type="text"
                 placeholder="e.g. AV / Production / Ceremony"
                 value={newCategory}
@@ -251,10 +253,11 @@ export const TimelineEngine: React.FC<TimelineEngineProps> = ({
 
             {activePhase === 'countdown' ? (
               <div>
-                <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+                <label htmlFor="new-milestone-timeframe" className="block text-[11px] font-medium text-vesta-muted mb-1">
                   Timeframe (Relative)
                 </label>
                 <input
+                  id="new-milestone-timeframe"
                   type="text"
                   placeholder="e.g. 4 months before"
                   value={newTimeframe}
@@ -264,10 +267,11 @@ export const TimelineEngine: React.FC<TimelineEngineProps> = ({
               </div>
             ) : (
               <div>
-                <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+                <label htmlFor="new-milestone-timeslot" className="block text-[11px] font-medium text-vesta-muted mb-1">
                   Time Slot (Clock Time)
                 </label>
                 <input
+                  id="new-milestone-timeslot"
                   type="text"
                   placeholder="e.g. 18:30 – 19:15"
                   value={newTimeSlot}
@@ -278,10 +282,11 @@ export const TimelineEngine: React.FC<TimelineEngineProps> = ({
             )}
 
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-milestone-assignee" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Assignee
               </label>
               <input
+                id="new-milestone-assignee"
                 type="text"
                 placeholder="e.g. Sound Engineer"
                 value={newAssignee}
@@ -291,10 +296,11 @@ export const TimelineEngine: React.FC<TimelineEngineProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+              <label htmlFor="new-milestone-dependency" className="block text-[11px] font-medium text-vesta-muted mb-1">
                 Dependency Note
               </label>
               <input
+                id="new-milestone-dependency"
                 type="text"
                 placeholder="e.g. Requires stage generator test"
                 value={newDependency}

@@ -21,6 +21,7 @@ import {
   Coins,
   FileText,
   Bot,
+  Contrast,
 } from 'lucide-react';
 import type { EventProject, EventVertical } from '../types/event';
 import { personaMetadata } from '../data/verticalPersonas';
@@ -73,6 +74,35 @@ export const Header: React.FC<HeaderProps> = ({
   const [newBudget, setNewBudget] = useState('1500000');
   const [newSetting, setNewSetting] = useState<'indoor' | 'outdoor' | 'hybrid'>('hybrid');
   const [newSeason, setNewSeason] = useState<EventProject['season']>('winter');
+
+  // WCAG 2.1 AAA High Contrast Mode state
+  const [isHighContrast, setIsHighContrast] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('vesta_high_contrast_aaa') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  React.useEffect(() => {
+    if (isHighContrast) {
+      document.documentElement.classList.add('high-contrast-aaa');
+    } else {
+      document.documentElement.classList.remove('high-contrast-aaa');
+    }
+  }, [isHighContrast]);
+
+  const toggleHighContrast = () => {
+    setIsHighContrast((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('vesta_high_contrast_aaa', String(next));
+      } catch {
+        // Storage access error
+      }
+      return next;
+    });
+  };
 
   // Close modals on Escape key
   React.useEffect(() => {
@@ -301,6 +331,23 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">Export</span>
             </button>
           )}
+
+          {/* WCAG 2.1 AAA High-Contrast Toggle Button */}
+          <button
+            onClick={toggleHighContrast}
+            type="button"
+            aria-pressed={isHighContrast}
+            aria-label="Toggle WCAG 2.1 AAA High Contrast Mode"
+            title="Toggle WCAG 2.1 AAA High Contrast Mode (>7:1 ratio)"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-gold ${
+              isHighContrast
+                ? 'bg-yellow-400 text-black border-yellow-400 shadow-md font-bold'
+                : 'bg-vesta-surface text-vesta-muted border-vesta-border hover:text-vesta-text hover:border-yellow-400/40'
+            }`}
+          >
+            <Contrast className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">AAA</span>
+          </button>
 
           {/* AI Copilot Drawer Button */}
           {onOpenCopilot && (

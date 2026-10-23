@@ -316,10 +316,11 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+                <label htmlFor="new-cat-name" className="block text-[11px] font-medium text-vesta-muted mb-1">
                   Category Name
                 </label>
                 <input
+                  id="new-cat-name"
                   type="text"
                   required
                   placeholder="e.g. Drone Light Show"
@@ -330,10 +331,11 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+                <label htmlFor="new-cat-amount" className="block text-[11px] font-medium text-vesta-muted mb-1">
                   Allocated Amount (₹)
                 </label>
                 <input
+                  id="new-cat-amount"
                   type="number"
                   min="0"
                   step="5000"
@@ -345,10 +347,12 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-vesta-muted mb-1">
+                <label htmlFor="new-cat-priority" className="block text-[11px] font-medium text-vesta-muted mb-1">
                   Priority
                 </label>
                 <select
+                  id="new-cat-priority"
+                  aria-label="New category priority"
                   value={newCatPriority}
                   onChange={(e) =>
                     setNewCatPriority(e.target.value as 'high' | 'medium' | 'low')
@@ -460,6 +464,7 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
                           </span>
                           <input
                             type="number"
+                            aria-label="Edit allocated amount"
                             value={editAllocated}
                             onChange={(e) => setEditAllocated(e.target.value)}
                             className="w-24 px-2 py-0.5 rounded bg-vesta-card border border-vesta-iris text-xs text-vesta-text font-mono"
@@ -471,6 +476,7 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
                           </span>
                           <input
                             type="number"
+                            aria-label="Edit spent amount"
                             value={editSpent}
                             onChange={(e) => setEditSpent(e.target.value)}
                             className="w-24 px-2 py-0.5 rounded bg-vesta-card border border-vesta-iris text-xs text-vesta-text font-mono"

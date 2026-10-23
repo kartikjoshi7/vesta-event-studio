@@ -17,7 +17,7 @@ import type {
   VendorChecklistItem,
   IdeaCategory,
 } from '../types/event';
-import { sanitizeUserInput, safeJsonParse } from '../utils/security';
+import { sanitizeUserInput, safeJsonParse, checkRateLimit } from '../utils/security';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
@@ -71,6 +71,15 @@ function getApiKey(): string | null {
  * @throws On network or API errors.
  */
 async function callGemini(prompt: string, apiKey: string): Promise<string> {
+  const rateLimit = checkRateLimit('gemini-rest-api', 20, 60_000);
+  if (!rateLimit.allowed) {
+    throw new Error(
+      `Rate limit exceeded for Gemini API calls. Please wait ${Math.ceil(
+        rateLimit.resetInMs / 1000,
+      )}s before retrying.`,
+    );
+  }
+
   const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
   const response = await fetch(url, {

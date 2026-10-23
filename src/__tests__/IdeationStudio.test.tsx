@@ -20,7 +20,7 @@ describe('IdeationStudio Component', () => {
       />,
     );
 
-    expect(screen.getByText('Personalized Ideation Studio')).toBeDefined();
+    expect(screen.getByText(/Personalized Ideation/i)).toBeDefined();
     expect(screen.getByText(new RegExp(`${weddingProject.guestCount} Guests`))).toBeDefined();
     expect(screen.getByText(/Zero-Waste Luxury Decor/i)).toBeDefined();
   });
@@ -60,5 +60,23 @@ describe('IdeationStudio Component', () => {
 
     fireEvent.click(addButtons[0]);
     expect(handleApply).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders curated color swatches and copywriter tools', () => {
+    const handleApply = vi.fn();
+    const handleAdd = vi.fn();
+
+    render(
+      <IdeationStudio
+        project={weddingProject}
+        onApplyIdea={handleApply}
+        onAddGeneratedIdeas={handleAdd}
+      />,
+    );
+
+    expect(screen.getByText(/Curated Event Color Palette/i)).toBeDefined();
+    expect(screen.getByText(/AI Invitation & Toast Speech Copywriter/i)).toBeDefined();
+    expect(screen.getByRole('tab', { name: /Guest Invitation/i })).toBeDefined();
+    expect(screen.getByRole('tab', { name: /Host Toast Speech/i })).toBeDefined();
   });
 });

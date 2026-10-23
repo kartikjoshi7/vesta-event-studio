@@ -4,6 +4,7 @@ import {
   validateNumberInput,
   maskApiKey,
   safeJsonParse,
+  checkRateLimit,
 } from './security';
 
 describe('Security Utilities', () => {
@@ -88,6 +89,34 @@ describe('Security Utilities', () => {
       expect(safeJsonParse('', [1, 2])).toEqual([1, 2]);
       // @ts-expect-error testing invalid input
       expect(safeJsonParse(null, 'default')).toBe('default');
+    });
+  });
+
+  describe('checkRateLimit', () => {
+    it('allows requests within window threshold', () => {
+      const key = `test-action-${Date.now()}`;
+      const res1 = checkRateLimit(key, 3, 1000);
+      expect(res1.allowed).toBe(true);
+      expect(res1.remaining).toBe(2);
+
+      const res2 = checkRateLimit(key, 3, 1000);
+      expect(res2.allowed).toBe(true);
+      expect(res2.remaining).toBe(1);
+
+      const res3 = checkRateLimit(key, 3, 1000);
+      expect(res3.allowed).toBe(true);
+      expect(res3.remaining).toBe(0);
+    });
+
+    it('blocks requests once threshold is reached within window', () => {
+      const key = `test-block-${Date.now()}`;
+      checkRateLimit(key, 2, 5000);
+      checkRateLimit(key, 2, 5000);
+
+      const blocked = checkRateLimit(key, 2, 5000);
+      expect(blocked.allowed).toBe(false);
+      expect(blocked.remaining).toBe(0);
+      expect(blocked.resetInMs).toBeGreaterThan(0);
     });
   });
 });
