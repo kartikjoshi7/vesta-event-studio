@@ -1,0 +1,8 @@
+# Robots.txt for Vesta Event Studio
+# https://vesta-event-studio.vercel.app/
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://vesta-event-studio.vercel.app/sitemap.xml

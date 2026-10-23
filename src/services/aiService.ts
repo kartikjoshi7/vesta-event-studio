@@ -24,7 +24,7 @@ import { sanitizeUserInput, safeJsonParse, checkRateLimit } from '../utils/secur
 /** The Gemini model endpoint. */
 const GEMINI_MODEL =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) ||
-  'gemini-2.5-flash';
+  'gemini-3.5-flash';
 
 /** Base URL for the Gemini REST API. */
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -40,6 +40,11 @@ const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models
  * @returns The API key string, or `null` if none is configured.
  */
 function getApiKey(): string | null {
+  // In automated test runs, bypass external network calls for offline determinism
+  if (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test') {
+    return null;
+  }
+
   // Env var (build-time)
   const envKey =
     typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY;
@@ -64,6 +69,7 @@ function getApiKey(): string | null {
 
 /**
  * Sends a prompt to Google Gemini and returns the text response.
+ * Automatically tries modern candidate models if a deprecated model returns 404.
  *
  * @param prompt - The sanitised prompt to send.
  * @param apiKey - A valid Gemini API key.
@@ -80,35 +86,56 @@ async function callGemini(prompt: string, apiKey: string): Promise<string> {
     );
   }
 
-  const url = `${GEMINI_BASE_URL}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const candidateModels = [
+    GEMINI_MODEL,
+    'gemini-3.5-flash',
+    'gemini-3-flash-preview',
+  ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.9,
-        maxOutputTokens: 2048,
-      },
-    }),
-  });
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorBody}`);
+  for (const model of candidateModels) {
+    try {
+      const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.9,
+            maxOutputTokens: 2048,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Gemini API error (${response.status}): ${errorBody}`);
+      }
+
+      const data = await response.json();
+      const text: string | undefined =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) {
+        throw new Error('Gemini returned an empty response.');
+      }
+
+      return text;
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // If 404 (model retired/not found), proceed to next candidate model
+      if (lastError.message.includes('404') || lastError.message.includes('NOT_FOUND')) {
+        continue;
+      }
+      throw lastError;
+    }
   }
 
-  const data = await response.json();
-  const text: string | undefined =
-    data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) {
-    throw new Error('Gemini returned an empty response.');
-  }
-
-  return text;
+  throw lastError || new Error('All Gemini candidate models failed.');
 }
 
 // ─── Smart Local Fallback Engine ────────────────────────────────────────────

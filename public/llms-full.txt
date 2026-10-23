@@ -1,0 +1,26 @@
+# Vesta Event Studio — Complete System & Agent Architecture
+
+> Comprehensive machine-readable documentation for AI web agents, MCP tools, and autonomous browsers interacting with Vesta Event Studio.
+
+## Overview
+Vesta Event Studio is a client-side TypeScript / React 19 single-page application built on Vite and Tailwind CSS. All core operational states (budgets, vendor CRM records, timeline events, and ideation logs) are persistently managed in `localStorage` with resilient `safeJsonParse` fault isolation.
+
+## Security & Privacy Guardrails
+1. **Zero Raw Prompt Leaks**: User inputs are strictly sanitized via DOMPurify before rendering or injection into AI prompts.
+2. **Dual-Engine Architecture**: When `VITE_GEMINI_API_KEY` is not present, all generation gracefully falls back to deterministic rule-based algorithms with zero errors.
+3. **OWASP Compliance**: HTTP headers enforce `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, and strict CSP rules.
+4. **Rate Limiting**: Sliding-window rate limiter prevents API exhaustion with informative countdown retry metrics.
+
+## Supported Event Verticals & Personas
+- **Wedding Blueprint**: Royal Heritage Indian Wedding (Udaipur, INR 25L, 250 guests, winter season).
+- **Birthday Blueprint**: Cyberpunk Neon Milestone Birthday (Neo-Tokyo, USD $18k, 80 guests, autumn season).
+- **Community Blueprint**: Sustainable Neighborhood Harvest Summit (Greenfield, USD $12k, 600 guests, autumn season).
+
+## Keyboard Shortcuts
+- `1`: Switch to Executive Overview
+- `2`: Switch to Budget Architect
+- `3`: Switch to Timeline & Run-of-Show
+- `4`: Switch to Smart Vendor CRM
+- `5`: Switch to Creative Ideation Studio
+- `Cmd/Ctrl + K`: Toggle AI Copilot Drawer
+- `Escape`: Close active modals and drawers

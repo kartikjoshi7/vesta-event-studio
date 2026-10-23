@@ -1,0 +1,26 @@
+# Vesta Event Studio
+
+> Enterprise Celebration & Event Planning Operating System powered by context-aware AI synthesis, financial governance, dual-horizon timelines, and vendor contract orchestration.
+
+Vesta Event Studio is an enterprise-grade Single Page Application (SPA) designed for luxury wedding planners, milestone celebration directors, and civic summit organizers. It combines real-time financial recalculation, day-of run of show execution tracking, vendor negotiation drafting, and dual-engine AI ideation (Google Gemini 2.5 Flash with deterministic algorithmic fallback).
+
+## Core Application Modules
+
+- [Executive Overview](https://vesta-event-studio.vercel.app/): Executive KPI health gauges (Event Readiness Score, Budget Burn Index, Vendor Contract Lock), critical path alerts, and parametric What-If contingency simulator (weather shifts, emergency budget cuts, guest surges, vendor cancellations).
+- [Budget Architect](https://vesta-event-studio.vercel.app/): Parametric category allocation across Venue, F&B, Decor, Photo, Entertainment, and Contingency with real-time dynamic rebalancing and 1-click AI audit.
+- [Timeline Engine](https://vesta-event-studio.vercel.app/): Dual-horizon scheduling bridging multi-month milestones with minute-by-minute Day-of Run-of-Show execution, role assignments, and buffer calculations.
+- [Smart Vendor CRM](https://vesta-event-studio.vercel.app/): Vendor lifecycle tracking across inquiry, quoting, contracted, and fulfilled states with automated AI contract negotiation email drafter.
+- [Creative Ideation Studio](https://vesta-event-studio.vercel.app/): Context-constrained creative ideation tailored to guest count, budget tier, season, physical setting, vibe tags, and dietary restrictions with 1-click plan injection.
+- [Context-Aware AI Copilot](https://vesta-event-studio.vercel.app/): Slide-out drawer with zero-latency quick prompts for budget risk analysis, weather contingency, day-of script generation, and vendor negotiation.
+
+## Workspaces & Personas
+
+- [Aarav & Meera Royal Heritage Wedding](https://vesta-event-studio.vercel.app/): Udaipur destination wedding, 250 guests, INR 25,00,000 budget, winter season, royal regality and regal splendor theme.
+- [Elena Vance Cyberpunk 30th Birthday](https://vesta-event-studio.vercel.app/): Neo-Tokyo immersive milestone birthday, 80 guests, USD $18,000 budget, autumn season, cyberpunk and electronic theme.
+- [Greenfield Neighborhood Harvest Festival](https://vesta-event-studio.vercel.app/): Community summit, 600 guests, USD $12,000 budget, autumn season, sustainable eco-friendly theme.
+
+## Architecture & Machine-Readable Resources
+
+- [Full Machine-Readable Architecture Guide](https://vesta-event-studio.vercel.app/llms-full.txt): Comprehensive technical documentation for AI agents, system parameters, data schema, and security policies.
+- [Robots Policy](https://vesta-event-studio.vercel.app/robots.txt): Crawler and agent indexing directives.
+- [XML Sitemap](https://vesta-event-studio.vercel.app/sitemap.xml): Canonical index structure.

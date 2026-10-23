@@ -18,7 +18,6 @@ import {
   Calendar,
   ShieldCheck,
   Sparkles,
-  Bot,
 } from 'lucide-react';
 import { useEventWorkspace } from './hooks/useEventWorkspace';
 import { Header } from './components/Header';
@@ -208,7 +207,7 @@ export function App() {
                     >
                       {tab.badge}
                     </span>
-                    <span className="hidden xl:inline-block text-[9px] font-mono opacity-30 group-hover:opacity-60 ml-0.5">
+                    <span className="hidden xl:inline-block text-[9px] font-mono text-vesta-muted opacity-80 group-hover:opacity-100 ml-0.5">
                       [{tab.shortcut}]
                     </span>
                   </button>
@@ -291,18 +290,7 @@ export function App() {
         </div>
       </main>
 
-      {/* ─── Floating AI Copilot Trigger Button ──────────────────────────── */}
-      <button
-        onClick={() => setIsCopilotOpen(true)}
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={isCopilotOpen}
-        aria-label="Open Context AI Copilot"
-        className="fixed bottom-6 right-6 z-40 p-3.5 rounded-full bg-gradient-to-tr from-vesta-iris via-purple-600 to-vesta-foam text-white shadow-2xl shadow-vesta-iris/40 hover:scale-105 active:scale-95 transition-all focus:outline-none focus:ring-4 focus:ring-vesta-iris/50 flex items-center gap-2 group border border-white/20"
-      >
-        <Bot className="w-5 h-5 text-vesta-gold group-hover:rotate-12 transition-transform" />
-        <span className="text-xs font-bold pr-1 hidden sm:inline">Ask Copilot</span>
-      </button>
+
 
       {/* ─── Context AI Copilot Drawer ──────────────────────────────────── */}
       <ContextCopilotDrawer

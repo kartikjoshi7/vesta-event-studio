@@ -371,7 +371,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </span>
             <span className="font-mono text-xs">{score}%</span>
-            <span className="hidden md:inline text-[10px] font-medium opacity-80 pl-1 border-l border-current/20">
+            <span className="hidden md:inline text-[10px] font-medium pl-1 border-l border-current/25">
               Ready
             </span>
           </div>
