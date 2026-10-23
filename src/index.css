@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* ─── Vesta Event Studio – Design Tokens ─────────────────────────────────── */
+
+@theme {
+  --color-vesta-midnight: #0f0e17;
+  --color-vesta-surface: #1a1929;
+  --color-vesta-card: #232136;
+  --color-vesta-border: #2e2b45;
+  --color-vesta-muted: #6e6a86;
+  --color-vesta-text: #e0def4;
+  --color-vesta-gold: #f6c177;
+  --color-vesta-rose: #eb6f92;
+  --color-vesta-iris: #c4a7e7;
+  --color-vesta-pine: #31748f;
+  --color-vesta-foam: #9ccfd8;
+  --color-vesta-success: #56d67e;
+  --color-vesta-warning: #f6c177;
+  --color-vesta-danger: #eb6f92;
+
+  --font-display: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+
+/* ─── Base resets ─────────────────────────────────────────────────────────── */
+
+body {
+  margin: 0;
+  background: var(--color-vesta-midnight);
+  color: var(--color-vesta-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100dvh;
+}
