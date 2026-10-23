@@ -13,6 +13,7 @@ import type {
   BudgetCategory,
   TimelineItem,
   VendorChecklistItem,
+  PersonalizedIdea,
   ContextDecisionLog,
 } from '../types/event';
 import {
@@ -102,6 +103,7 @@ export interface UseEventWorkspaceReturn {
   updateVendorStatus: (vendorId: string, status: VendorChecklistItem['status'], actualCost?: number) => void;
   addVendor: (vendor: Omit<VendorChecklistItem, 'id'>) => void;
   applyIdeaToPlan: (ideaId: string) => void;
+  addGeneratedIdeas: (ideas: PersonalizedIdea[]) => void;
   triggerContingencyScenario: (scenario: 'weather' | 'budget-cut' | 'guest-surge' | 'vendor-drop') => {
     adjustments: string[];
     notes: string[];
@@ -624,6 +626,22 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     [updateActiveProject],
   );
 
+  // 12b. Add newly synthesized personalized ideas
+  const addGeneratedIdeas = useCallback(
+    (newIdeas: PersonalizedIdea[]) => {
+      updateActiveProject((current) => {
+        const existingTitles = new Set(current.savedIdeas.map((i) => i.title.toLowerCase()));
+        const uniqueNew = newIdeas.filter((i) => !existingTitles.has(i.title.toLowerCase()));
+
+        return {
+          ...current,
+          savedIdeas: [...uniqueNew, ...current.savedIdeas],
+        };
+      });
+    },
+    [updateActiveProject],
+  );
+
   // 13. Trigger contingency scenario
   const triggerContingencyScenario = useCallback(
     (scenario: 'weather' | 'budget-cut' | 'guest-surge' | 'vendor-drop') => {
@@ -716,6 +734,7 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     updateVendorStatus,
     addVendor,
     applyIdeaToPlan,
+    addGeneratedIdeas,
     triggerContingencyScenario,
     resetDemoData,
   };

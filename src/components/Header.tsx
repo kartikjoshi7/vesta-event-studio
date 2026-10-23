@@ -19,6 +19,8 @@ import {
   MapPin,
   Users,
   Coins,
+  FileText,
+  Bot,
 } from 'lucide-react';
 import type { EventProject, EventVertical } from '../types/event';
 import { personaMetadata } from '../data/verticalPersonas';
@@ -32,6 +34,8 @@ interface HeaderProps {
   onSelectVertical: (verticalOrId: string) => void;
   onCreateProject: (customData: Partial<EventProject>) => void;
   onResetDemoData: () => void;
+  onOpenExportModal?: () => void;
+  onOpenCopilot?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -41,6 +45,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectVertical,
   onCreateProject,
   onResetDemoData,
+  onOpenExportModal,
+  onOpenCopilot,
 }) => {
   // Modal state
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
@@ -67,6 +73,18 @@ export const Header: React.FC<HeaderProps> = ({
   const [newBudget, setNewBudget] = useState('1500000');
   const [newSetting, setNewSetting] = useState<'indoor' | 'outdoor' | 'hybrid'>('hybrid');
   const [newSeason, setNewSeason] = useState<EventProject['season']>('winter');
+
+  // Close modals on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsApiKeyModalOpen(false);
+        setIsNewEventModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSaveApiKey = (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,18 +276,44 @@ export const Header: React.FC<HeaderProps> = ({
             aria-haspopup="dialog"
             aria-expanded={isApiKeyModalOpen}
             aria-label="AI Engine and API Key settings"
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
               hasLiveApiKey
                 ? 'bg-vesta-foam/10 text-vesta-foam border-vesta-foam/30 hover:bg-vesta-foam/20'
                 : 'bg-vesta-surface text-vesta-muted border-vesta-border hover:text-vesta-text hover:border-vesta-iris/40'
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
+            <span className="hidden lg:inline">
               {hasLiveApiKey ? 'Gemini 2.5 Live' : 'Smart Engine'}
             </span>
-            <span className="sm:hidden">AI</span>
+            <span className="lg:hidden">AI</span>
           </button>
+
+          {/* Export Blueprint Button */}
+          {onOpenExportModal && (
+            <button
+              onClick={onOpenExportModal}
+              type="button"
+              aria-label="Export Event Blueprint"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-vesta-surface hover:bg-vesta-border border border-vesta-border text-vesta-text hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-vesta-foam"
+            >
+              <FileText className="w-3.5 h-3.5 text-vesta-foam" />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+          )}
+
+          {/* AI Copilot Drawer Button */}
+          {onOpenCopilot && (
+            <button
+              onClick={onOpenCopilot}
+              type="button"
+              aria-label="Open AI Copilot Drawer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-vesta-iris to-vesta-pine text-white hover:opacity-90 transition-all shadow-md shadow-vesta-iris/20 focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+            >
+              <Bot className="w-3.5 h-3.5 text-vesta-gold" />
+              <span className="hidden sm:inline">Copilot</span>
+            </button>
+          )}
         </div>
       </div>
 
