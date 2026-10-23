@@ -1,229 +1,217 @@
 /**
- * @fileoverview Phase 1 Diagnostic Status Screen for Vesta Event Studio.
+ * @fileoverview Main Application Root for Vesta Event Studio.
  *
- * Confirms that all core modules are loaded and functional. This is a
- * temporary screen that will be replaced by the full UI in Phase 2.
+ * Wires the persistent event workspace state hook to the interactive planning
+ * modules: Header & Persona Switcher, Executive Overview & Contingency Simulator,
+ * Dynamic Budget Architect, Dual-Horizon Timeline Engine, and Smart Vendor CRM.
  */
 
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  CheckCircle,
-  XCircle,
-  Loader2,
+  LayoutDashboard,
+  Coins,
+  Calendar,
+  ShieldCheck,
   Sparkles,
-  Shield,
-  Database,
-  Brain,
-  Bot,
 } from 'lucide-react';
+import { useEventWorkspace } from './hooks/useEventWorkspace';
+import { Header } from './components/Header';
+import { OverviewDashboard } from './components/OverviewDashboard';
+import { BudgetArchitect } from './components/BudgetArchitect';
+import { TimelineEngine } from './components/TimelineEngine';
+import { VendorCRM } from './components/VendorCRM';
 import './index.css';
 
-// ─── Module imports for verification ────────────────────────────────────────
+type ActiveTab = 'overview' | 'budget' | 'timeline' | 'vendors';
 
-import type { EventProject } from './types/event';
-import { sanitizeUserInput, validateNumberInput, maskApiKey, safeJsonParse } from './utils/security';
-import { allPersonas, personaMetadata, allocationRulesByVertical } from './data/verticalPersonas';
-import { rebalanceBudgetForContext, calculateEventReadiness, generateContingencyPlan } from './services/contextEngine';
-import { generatePersonalizedIdeas, askContextAssistant } from './services/aiService';
+export function App() {
+  const {
+    projects,
+    activeProject,
+    readinessMetrics,
+    selectVerticalProject,
+    createNewProject,
+    updateProjectContext,
+    toggleCategoryLock,
+    updateCategorySpend,
+    addBudgetCategory,
+    updateTimelineStatus,
+    addTimelineItem,
+    toggleVendorChecklistItem,
+    updateVendorStatus,
+    addVendor,
+    triggerContingencyScenario,
+    resetDemoData,
+  } = useEventWorkspace();
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
-interface ModuleCheck {
-  name: string;
-  icon: React.ReactNode;
-  status: 'pass' | 'fail' | 'loading';
-  detail: string;
-}
-
-// ─── Component ──────────────────────────────────────────────────────────────
-
-function App() {
-  const [checks, setChecks] = useState<ModuleCheck[]>([]);
-  const [phase, setPhase] = useState<'checking' | 'done'>('checking');
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function executeDiagnostics() {
-      const results: ModuleCheck[] = [];
-
-      // 1. Types module
-      try {
-        const sample: EventProject = allPersonas[0];
-        const hasRequiredFields =
-          sample.id && sample.title && sample.vertical && sample.budgetCategories.length > 0;
-        results.push({
-          name: 'Types & Domain Model',
-          icon: <Database size={20} />,
-          status: hasRequiredFields ? 'pass' : 'fail',
-          detail: hasRequiredFields
-            ? `EventProject interface validated — ${Object.keys(sample).length} fields`
-            : 'Missing required fields on EventProject',
-        });
-      } catch (e) {
-        results.push({ name: 'Types & Domain Model', icon: <Database size={20} />, status: 'fail', detail: String(e) });
-      }
-
-      // 2. Security utilities
-      try {
-        const xss = sanitizeUserInput('<script>alert("xss")</script>Hello World');
-        const num = validateNumberInput('250', 1, 10000, 100);
-        const masked = maskApiKey('AIzaSyD1234567890abcdef');
-        const parsed = safeJsonParse('[1,2,3]', []);
-        const allPass = xss === 'Hello World' && num === 250 && masked.includes('****') && parsed.length === 3;
-        results.push({
-          name: 'Security Utilities',
-          icon: <Shield size={20} />,
-          status: allPass ? 'pass' : 'fail',
-          detail: allPass
-            ? 'XSS sanitizer, numeric validator, key masker, JSON parser — all passing'
-            : `Some checks failed: xss="${xss}" num=${num} masked="${masked}" parsed=${JSON.stringify(parsed)}`,
-        });
-      } catch (e) {
-        results.push({ name: 'Security Utilities', icon: <Shield size={20} />, status: 'fail', detail: String(e) });
-      }
-
-      // 3. Vertical personas
-      try {
-        const verticals = allPersonas.map((p) => p.vertical);
-        const hasAll = verticals.includes('wedding') && verticals.includes('birthday') && verticals.includes('community');
-        const metaOk = personaMetadata.wedding && personaMetadata.birthday && personaMetadata.community;
-        const rulesOk = allocationRulesByVertical.wedding.length > 0;
-        results.push({
-          name: 'Vertical Personas & Data',
-          icon: <Sparkles size={20} />,
-          status: hasAll && metaOk && rulesOk ? 'pass' : 'fail',
-          detail: hasAll
-            ? `3 verticals loaded: ${allPersonas.map((p) => `${personaMetadata[p.vertical].emoji} ${p.title}`).join(' | ')}`
-            : 'Missing verticals',
-        });
-      } catch (e) {
-        results.push({ name: 'Vertical Personas & Data', icon: <Sparkles size={20} />, status: 'fail', detail: String(e) });
-      }
-
-      // 4. Context engine
-      try {
-        const wedding = allPersonas.find((p) => p.vertical === 'wedding')!;
-        const rebalance = rebalanceBudgetForContext(wedding, 2000000, 200);
-        const readiness = calculateEventReadiness(wedding);
-        const contingency = generateContingencyPlan(wedding, 'weather');
-        const engineOk =
-          rebalance.updatedCategories.length > 0 &&
-          readiness.overallScore >= 0 &&
-          contingency.adjustments.length > 0;
-        results.push({
-          name: 'Context Decision Engine',
-          icon: <Brain size={20} />,
-          status: engineOk ? 'pass' : 'fail',
-          detail: engineOk
-            ? `Rebalance: ${rebalance.updatedCategories.length} categories | Readiness: ${readiness.overallScore}/100 | Contingency: ${contingency.adjustments.length} actions`
-            : 'Engine returned invalid data',
-        });
-      } catch (e) {
-        results.push({ name: 'Context Decision Engine', icon: <Brain size={20} />, status: 'fail', detail: String(e) });
-      }
-
-      // 5. AI service (local fallback)
-      try {
-        const wedding = allPersonas.find((p) => p.vertical === 'wedding')!;
-        const ideas = await generatePersonalizedIdeas(wedding);
-        const assistant = await askContextAssistant(wedding, 'What is my budget status?');
-        const aiOk = ideas.length > 0 && assistant.reply.length > 0;
-        results.push({
-          name: 'AI Service (Hybrid Engine)',
-          icon: <Bot size={20} />,
-          status: aiOk ? 'pass' : 'fail',
-          detail: aiOk
-            ? `${ideas.length} ideas generated | Assistant mode: ${assistant.engineMode} | Reply: ${assistant.reply.slice(0, 60)}…`
-            : 'AI service returned empty results',
-        });
-      } catch (e) {
-        results.push({ name: 'AI Service (Hybrid Engine)', icon: <Bot size={20} />, status: 'fail', detail: String(e) });
-      }
-
-      if (isMounted) {
-        setChecks(results);
-        setPhase('done');
-      }
-    }
-
-    void executeDiagnostics();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const passCount = checks.filter((c) => c.status === 'pass').length;
-  const allPassed = phase === 'done' && passCount === checks.length && checks.length > 0;
+  const navTabs = [
+    {
+      id: 'overview' as ActiveTab,
+      label: 'Executive Overview',
+      icon: <LayoutDashboard className="w-4 h-4" />,
+      badge: `${readinessMetrics.overallScore}%`,
+    },
+    {
+      id: 'budget' as ActiveTab,
+      label: 'Budget Architect',
+      icon: <Coins className="w-4 h-4" />,
+      badge: `${activeProject.currency} ${(activeProject.totalBudget / 1000).toFixed(0)}k`,
+    },
+    {
+      id: 'timeline' as ActiveTab,
+      label: 'Timeline & Run-of-Show',
+      icon: <Calendar className="w-4 h-4" />,
+      badge: `${activeProject.timelineItems.length}`,
+    },
+    {
+      id: 'vendors' as ActiveTab,
+      label: 'Smart Vendor CRM',
+      icon: <ShieldCheck className="w-4 h-4" />,
+      badge: `${activeProject.vendors.length}`,
+    },
+  ];
 
   return (
-    <div className="min-h-dvh bg-vesta-midnight flex items-center justify-center p-6">
-      <div className="w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-vesta-gold via-vesta-iris to-vesta-foam bg-clip-text text-transparent">
-            Vesta Event Studio
-          </h1>
-          <p className="text-vesta-muted mt-2 text-sm tracking-wide uppercase">
-            Phase 1 — Architecture Diagnostic
-          </p>
-        </div>
+    <div className="min-h-screen bg-vesta-midnight text-vesta-text flex flex-col font-sans selection:bg-vesta-iris selection:text-white">
+      {/* ─── Global Command Header ──────────────────────────────────────── */}
+      <Header
+        activeProject={activeProject}
+        projects={projects}
+        readinessMetrics={readinessMetrics}
+        onSelectVertical={selectVerticalProject}
+        onCreateProject={createNewProject}
+        onResetDemoData={resetDemoData}
+      />
 
-        {/* Status card */}
-        <div className="bg-vesta-card border border-vesta-border rounded-2xl p-6 shadow-2xl">
-          {phase === 'checking' && checks.length === 0 ? (
-            <div className="flex items-center justify-center gap-3 py-8 text-vesta-muted">
-              <Loader2 size={24} className="animate-spin" />
-              <span>Running diagnostics…</span>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {checks.map((check, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-vesta-surface/50 border border-vesta-border/50"
+      {/* ─── Primary Navigation Bar ─────────────────────────────────────── */}
+      <nav
+        role="navigation"
+        aria-label="Planning Modules Navigation"
+        className="w-full border-b border-vesta-border bg-vesta-surface/40 backdrop-blur-md sticky top-20 z-30"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            role="tablist"
+            aria-label="Event Planning Modules"
+            className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-2.5 no-scrollbar"
+          >
+            {navTabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  id={`tab-${tab.id}`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`panel-${tab.id}`}
+                  tabIndex={isActive ? 0 : -1}
+                  onClick={() => setActiveTab(tab.id)}
+                  type="button"
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
+                    isActive
+                      ? 'bg-vesta-card text-vesta-gold border border-vesta-gold/30 shadow-md shadow-vesta-gold/5'
+                      : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface/80 border border-transparent'
+                  }`}
                 >
-                  <div className="mt-0.5 shrink-0">
-                    {check.status === 'pass' ? (
-                      <CheckCircle size={20} className="text-vesta-success" />
-                    ) : check.status === 'fail' ? (
-                      <XCircle size={20} className="text-vesta-danger" />
-                    ) : (
-                      <Loader2 size={20} className="text-vesta-muted animate-spin" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-vesta-iris">{check.icon}</span>
-                      <span className="font-semibold text-vesta-text text-sm">{check.name}</span>
-                    </div>
-                    <p className="text-xs text-vesta-muted mt-1 break-words">{check.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  <span
+                    className={
+                      isActive ? 'text-vesta-gold' : 'text-vesta-muted group-hover:text-vesta-text'
+                    }
+                  >
+                    {tab.icon}
+                  </span>
+                  <span>{tab.label}</span>
+                  <span
+                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                      isActive
+                        ? 'bg-vesta-gold/20 text-vesta-gold'
+                        : 'bg-vesta-surface text-vesta-muted'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── Main Content Canvas ────────────────────────────────────────── */}
+      <main
+        role="main"
+        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      >
+        <div
+          role="tabpanel"
+          id={`panel-${activeTab}`}
+          aria-labelledby={`tab-${activeTab}`}
+          className="focus:outline-none"
+        >
+          {activeTab === 'overview' && (
+            <OverviewDashboard
+              project={activeProject}
+              readinessMetrics={readinessMetrics}
+              onUpdateContext={updateProjectContext}
+              onTriggerContingency={triggerContingencyScenario}
+            />
           )}
 
-          {/* Summary */}
-          {phase === 'done' && (
-            <div className={`mt-6 p-4 rounded-xl text-center text-sm font-medium ${
-              allPassed
-                ? 'bg-vesta-success/10 text-vesta-success border border-vesta-success/20'
-                : 'bg-vesta-danger/10 text-vesta-danger border border-vesta-danger/20'
-            }`}>
-              {allPassed
-                ? `✅ All ${passCount} modules verified — Phase 1 complete. Ready for Phase 2.`
-                : `❌ ${checks.length - passCount} module(s) failed. Review errors above.`}
-            </div>
+          {activeTab === 'budget' && (
+            <BudgetArchitect
+              project={activeProject}
+              onToggleLock={toggleCategoryLock}
+              onUpdateCategorySpend={updateCategorySpend}
+              onAddCategory={addBudgetCategory}
+              onUpdateContext={updateProjectContext}
+            />
+          )}
+
+          {activeTab === 'timeline' && (
+            <TimelineEngine
+              project={activeProject}
+              onUpdateStatus={updateTimelineStatus}
+              onAddTimelineItem={addTimelineItem}
+            />
+          )}
+
+          {activeTab === 'vendors' && (
+            <VendorCRM
+              project={activeProject}
+              onToggleChecklistItem={toggleVendorChecklistItem}
+              onUpdateVendorStatus={updateVendorStatus}
+              onAddVendor={addVendor}
+            />
           )}
         </div>
+      </main>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-vesta-muted/50 mt-6">
-          Vesta Event Studio v0.1.0 · GenAI-Powered Celebration OS · Phase 1 Architecture
-        </p>
-      </div>
+      {/* ─── Enterprise Status Footer ───────────────────────────────────── */}
+      <footer
+        role="contentinfo"
+        className="w-full border-t border-vesta-border bg-vesta-surface/30 backdrop-blur-md py-4 text-center text-xs text-vesta-muted"
+      >
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-vesta-success animate-pulse" />
+            <span>
+              Active: <strong className="text-vesta-text">{activeProject.title}</strong> (
+              {activeProject.guestCount} Guests · {activeProject.currency}{' '}
+              {activeProject.totalBudget.toLocaleString()})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-[11px]">
+              <Sparkles className="w-3 h-3 text-vesta-gold" />
+              Vesta Event Studio v0.2.0 · GenAI Celebration OS
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -209,6 +209,9 @@ export interface ReadinessResult {
   nextBestActions: string[];
 }
 
+/** Type alias for ReadinessResult */
+export type ReadinessScore = ReadinessResult;
+
 /**
  * Computes a real-time 0–100 event-readiness score with actionable alerts.
  *

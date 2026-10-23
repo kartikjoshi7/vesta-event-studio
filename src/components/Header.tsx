@@ -1,0 +1,646 @@
+/**
+ * @fileoverview Luxury Glassmorphic Command Header for Vesta Event Studio.
+ *
+ * Provides brand identity, vertical persona quick-switcher, custom event creator modal,
+ * real-time readiness health indicator, and AI Engine / API Key configuration modal.
+ */
+
+import React, { useState } from 'react';
+import {
+  Sparkles,
+  Plus,
+  Key,
+  Shield,
+  RotateCcw,
+  CheckCircle2,
+  X,
+  Cpu,
+  Calendar,
+  MapPin,
+  Users,
+  Coins,
+} from 'lucide-react';
+import type { EventProject, EventVertical } from '../types/event';
+import { personaMetadata } from '../data/verticalPersonas';
+import { maskApiKey, sanitizeUserInput, validateNumberInput } from '../utils/security';
+import type { ReadinessScore } from '../services/contextEngine';
+
+interface HeaderProps {
+  activeProject: EventProject;
+  projects: EventProject[];
+  readinessMetrics: ReadinessScore;
+  onSelectVertical: (verticalOrId: string) => void;
+  onCreateProject: (customData: Partial<EventProject>) => void;
+  onResetDemoData: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({
+  activeProject,
+  projects,
+  readinessMetrics,
+  onSelectVertical,
+  onCreateProject,
+  onResetDemoData,
+}) => {
+  // Modal state
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [isNewEventModalOpen, setIsNewEventModalOpen] = useState(false);
+
+  // API Key local state
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [savedApiKey, setSavedApiKey] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('vesta_gemini_api_key');
+    } catch {
+      return null;
+    }
+  });
+  const [apiKeySuccessToast, setApiKeySuccessToast] = useState(false);
+
+  // New Event form state
+  const [newTitle, setNewTitle] = useState('');
+  const [newVertical, setNewVertical] = useState<EventVertical>('wedding');
+  const [newHost, setNewHost] = useState('');
+  const [newDate, setNewDate] = useState('');
+  const [newLocation, setNewLocation] = useState('');
+  const [newGuests, setNewGuests] = useState('150');
+  const [newBudget, setNewBudget] = useState('1500000');
+  const [newSetting, setNewSetting] = useState<'indoor' | 'outdoor' | 'hybrid'>('hybrid');
+  const [newSeason, setNewSeason] = useState<EventProject['season']>('winter');
+
+  const handleSaveApiKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    const sanitized = sanitizeUserInput(apiKeyInput.trim(), 120);
+    if (sanitized) {
+      try {
+        localStorage.setItem('vesta_gemini_api_key', sanitized);
+        setSavedApiKey(sanitized);
+        setApiKeyInput('');
+        setApiKeySuccessToast(true);
+        setTimeout(() => setApiKeySuccessToast(false), 3000);
+      } catch {
+        // Handle localStorage error
+      }
+    }
+  };
+
+  const handleClearApiKey = () => {
+    try {
+      localStorage.removeItem('vesta_gemini_api_key');
+      setSavedApiKey(null);
+      setApiKeyInput('');
+    } catch {
+      // Handle error
+    }
+  };
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const guests = validateNumberInput(newGuests, 1, 100_000, 100);
+    const budget = validateNumberInput(newBudget, 10_000, 1_000_000_000, 500_000);
+
+    onCreateProject({
+      title: newTitle || `${newHost || 'Private'} ${personaMetadata[newVertical].emoji} Event`,
+      vertical: newVertical,
+      personaName: newHost || 'Event Host',
+      date: newDate || new Date(Date.now() + 60 * 86_400_000).toISOString().split('T')[0],
+      location: newLocation || 'Bengaluru, India',
+      guestCount: guests,
+      totalBudget: budget,
+      indoorOutdoor: newSetting,
+      season: newSeason,
+    });
+
+    setIsNewEventModalOpen(false);
+    // Reset form
+    setNewTitle('');
+    setNewHost('');
+    setNewLocation('');
+  };
+
+  const score = readinessMetrics.overallScore;
+  const scoreColor =
+    score >= 80
+      ? 'text-vesta-success border-vesta-success/30 bg-vesta-success/10'
+      : score >= 60
+      ? 'text-vesta-warning border-vesta-warning/30 bg-vesta-warning/10'
+      : 'text-vesta-danger border-vesta-danger/30 bg-vesta-danger/10';
+
+  const hasLiveApiKey = Boolean(
+    savedApiKey ||
+      (typeof import.meta !== 'undefined' &&
+        import.meta.env?.VITE_GEMINI_API_KEY &&
+        import.meta.env.VITE_GEMINI_API_KEY !== 'your_google_gemini_api_key_here'),
+  );
+
+  return (
+    <header
+      role="banner"
+      aria-label="Application Header"
+      className="sticky top-0 z-40 w-full border-b border-vesta-border bg-vesta-midnight/80 backdrop-blur-xl transition-all"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+        {/* Brand Logo & Title */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div
+            className="w-11 h-11 rounded-xl bg-gradient-to-tr from-vesta-gold via-vesta-iris to-vesta-foam p-0.5 shadow-lg shadow-vesta-gold/10"
+            aria-hidden="true"
+          >
+            <div className="w-full h-full bg-vesta-surface rounded-[10px] flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-vesta-gold animate-pulse" />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-vesta-text via-vesta-gold to-vesta-foam bg-clip-text text-transparent">
+                VESTA
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-vesta-iris/15 text-vesta-iris border border-vesta-iris/30 tracking-wide uppercase">
+                Studio OS
+              </span>
+            </div>
+            <p className="text-[11px] text-vesta-muted font-medium tracking-tight">
+              Context-Aware Celebration & Event Operating System
+            </p>
+          </div>
+        </div>
+
+        {/* Center: Vertical Persona Switcher */}
+        <nav
+          role="navigation"
+          aria-label="Event Switcher"
+          className="hidden md:flex items-center gap-1.5 p-1.5 rounded-xl bg-vesta-surface/80 border border-vesta-border shadow-inner"
+        >
+          {projects.map((project) => {
+            const isActive = project.id === activeProject.id;
+            const meta = personaMetadata[project.vertical] || {
+              emoji: '✨',
+              tagline: project.vertical,
+            };
+
+            return (
+              <button
+                key={project.id}
+                onClick={() => onSelectVertical(project.id)}
+                type="button"
+                aria-pressed={isActive}
+                aria-label={`Select ${project.title}`}
+                className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
+                  isActive
+                    ? 'bg-vesta-card text-vesta-gold shadow-md border border-vesta-gold/30 font-semibold'
+                    : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface'
+                }`}
+              >
+                <span>{meta.emoji}</span>
+                <span className="max-w-[130px] truncate">{project.title.split(' ')[0]}</span>
+                {isActive && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-vesta-gold animate-ping"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => setIsNewEventModalOpen(true)}
+            type="button"
+            aria-label="Create Custom Event"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-vesta-iris hover:text-white hover:bg-vesta-iris/20 transition-all flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New</span>
+          </button>
+        </nav>
+
+        {/* Right Actions: Live Readiness Pill + AI Engine Key Config */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Readiness Score Pill */}
+          <div
+            role="status"
+            aria-label={`Event Readiness Score: ${score} percent`}
+            title={`Event Readiness: ${score}/100 - Budget ${readinessMetrics.budgetHealth}%, Timeline ${readinessMetrics.timelineHealth}%, Vendors ${readinessMetrics.vendorReadiness}%`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold backdrop-blur transition-all shadow-sm ${scoreColor}`}
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span
+                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    score >= 80
+                      ? 'bg-vesta-success'
+                      : score >= 60
+                      ? 'bg-vesta-warning'
+                      : 'bg-vesta-danger'
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    score >= 80
+                      ? 'bg-vesta-success'
+                      : score >= 60
+                      ? 'bg-vesta-warning'
+                      : 'bg-vesta-danger'
+                  }`}
+                />
+              </span>
+              <span className="font-mono text-sm tracking-tight">{score}%</span>
+            </div>
+            <span className="hidden sm:inline text-[11px] font-medium opacity-80 border-l border-current/20 pl-2">
+              Readiness
+            </span>
+          </div>
+
+          {/* AI Engine Config Button */}
+          <button
+            onClick={() => setIsApiKeyModalOpen(true)}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={isApiKeyModalOpen}
+            aria-label="AI Engine and API Key settings"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
+              hasLiveApiKey
+                ? 'bg-vesta-foam/10 text-vesta-foam border-vesta-foam/30 hover:bg-vesta-foam/20'
+                : 'bg-vesta-surface text-vesta-muted border-vesta-border hover:text-vesta-text hover:border-vesta-iris/40'
+            }`}
+          >
+            <Cpu className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">
+              {hasLiveApiKey ? 'Gemini 2.5 Live' : 'Smart Engine'}
+            </span>
+            <span className="sm:hidden">AI</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── AI Engine / API Key Modal ────────────────────────────────────── */}
+      {isApiKeyModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="api-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div className="relative w-full max-w-lg rounded-2xl bg-vesta-card border border-vesta-border p-6 shadow-2xl space-y-6">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-vesta-iris/15 text-vesta-iris border border-vesta-iris/30">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 id="api-modal-title" className="text-base font-semibold text-vesta-text">
+                    AI Engine & API Key Setup
+                  </h2>
+                  <p className="text-xs text-vesta-muted mt-0.5">
+                    Configure Google Gemini 2.5 Flash or utilize the Smart Context Engine
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsApiKeyModalOpen(false)}
+                type="button"
+                aria-label="Close dialog"
+                className="p-1 rounded-lg text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Current Engine Status Banner */}
+            <div className="p-4 rounded-xl bg-vesta-surface/70 border border-vesta-border/80 flex items-start gap-3">
+              <div className="mt-0.5 text-vesta-gold">
+                {hasLiveApiKey ? (
+                  <CheckCircle2 className="w-5 h-5 text-vesta-success" />
+                ) : (
+                  <Cpu className="w-5 h-5 text-vesta-foam" />
+                )}
+              </div>
+              <div className="text-xs space-y-1">
+                <div className="font-semibold text-vesta-text flex items-center gap-2">
+                  <span>
+                    Current Mode: {hasLiveApiKey ? 'Gemini 2.5 Flash (Live)' : 'Smart Context Engine (Zero Latency)'}
+                  </span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded text-[10px] font-mono uppercase ${
+                      hasLiveApiKey
+                        ? 'bg-vesta-success/20 text-vesta-success'
+                        : 'bg-vesta-foam/20 text-vesta-foam'
+                    }`}
+                  >
+                    Active
+                  </span>
+                </div>
+                <p className="text-vesta-muted text-[11px] leading-relaxed">
+                  {hasLiveApiKey
+                    ? `Live Gemini REST calls enabled with key: ${maskApiKey(savedApiKey || '')}. Automatic smart local fallback remains active if network errors occur.`
+                    : '100% offline uptime enabled. The Smart Context Engine generates deterministic, context-tailored negotiation scripts, contingency blueprints, and recommendations without requiring an API key.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveApiKey} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="gemini-key-input"
+                  className="block text-xs font-semibold text-vesta-text mb-1.5"
+                >
+                  Custom Google Gemini API Key
+                </label>
+                <div className="relative">
+                  <input
+                    id="gemini-key-input"
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="AIzaSyD..."
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text placeholder-vesta-muted focus:outline-none focus:ring-2 focus:ring-vesta-iris focus:border-transparent font-mono"
+                  />
+                </div>
+                <p className="text-[11px] text-vesta-muted mt-1.5 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-vesta-success" />
+                  Stored locally in your browser. Never exposed or logged in plain text.
+                </p>
+              </div>
+
+              {apiKeySuccessToast && (
+                <div className="p-2.5 rounded-lg bg-vesta-success/15 border border-vesta-success/30 text-vesta-success text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Gemini API Key successfully updated!</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                {savedApiKey ? (
+                  <button
+                    type="button"
+                    onClick={handleClearApiKey}
+                    className="text-xs text-vesta-danger hover:underline font-medium"
+                  >
+                    Remove Saved Key
+                  </button>
+                ) : (
+                  <span />
+                )}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsApiKeyModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!apiKeyInput.trim()}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-vesta-iris to-vesta-pine text-white hover:opacity-90 disabled:opacity-50 transition-opacity shadow-md shadow-vesta-iris/20"
+                  >
+                    Save Key
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Danger Zone: Reset Demo Data */}
+            <div className="border-t border-vesta-border/60 pt-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-vesta-text">Reset Demo Personas</p>
+                <p className="text-[11px] text-vesta-muted">Restore default Wedding, Birthday & Summit data</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Reset all demo data back to clean initial states?')) {
+                    onResetDemoData();
+                    setIsApiKeyModalOpen(false);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-vesta-muted hover:text-vesta-danger hover:bg-vesta-danger/10 border border-vesta-border hover:border-vesta-danger/30 transition-all"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Data</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Create Custom Event Modal ────────────────────────────────────── */}
+      {isNewEventModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-event-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div className="relative w-full max-w-xl rounded-2xl bg-vesta-card border border-vesta-border p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 id="new-event-title" className="text-base font-semibold text-vesta-text">
+                  Create Bespoke Event Project
+                </h2>
+                <p className="text-xs text-vesta-muted mt-0.5">
+                  Scaffold an enterprise event blueprint with contextual budgets and timelines
+                </p>
+              </div>
+              <button
+                onClick={() => setIsNewEventModalOpen(false)}
+                type="button"
+                aria-label="Close dialog"
+                className="p-1 rounded-lg text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              {/* Vertical Selection */}
+              <div>
+                <label className="block text-xs font-semibold text-vesta-text mb-2">
+                  Event Vertical Blueprint
+                </label>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {(['wedding', 'birthday', 'community'] as EventVertical[]).map((vert) => {
+                    const isSel = newVertical === vert;
+                    const meta = personaMetadata[vert];
+                    return (
+                      <button
+                        key={vert}
+                        type="button"
+                        onClick={() => setNewVertical(vert)}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          isSel
+                            ? 'bg-vesta-iris/15 border-vesta-iris text-vesta-text shadow-sm'
+                            : 'bg-vesta-surface border-vesta-border text-vesta-muted hover:text-vesta-text'
+                        }`}
+                      >
+                        <div className="text-lg">{meta.emoji}</div>
+                        <div className="text-xs font-semibold capitalize mt-1 text-vesta-text">
+                          {vert}
+                        </div>
+                        <div className="text-[10px] text-vesta-muted truncate mt-0.5">
+                          {meta.tagline}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Title & Host */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-title" className="block text-xs font-medium text-vesta-text mb-1">
+                    Event Title
+                  </label>
+                  <input
+                    id="new-title"
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Royal Heritage Sangeet"
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text placeholder-vesta-muted focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="new-host" className="block text-xs font-medium text-vesta-text mb-1">
+                    Host / Client Name
+                  </label>
+                  <input
+                    id="new-host"
+                    type="text"
+                    value={newHost}
+                    onChange={(e) => setNewHost(e.target.value)}
+                    placeholder="e.g. Priya & Arjun"
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text placeholder-vesta-muted focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Date & Location */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-date" className="block text-xs font-medium text-vesta-text mb-1 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-vesta-gold" />
+                    Target Date
+                  </label>
+                  <input
+                    id="new-date"
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="new-loc" className="block text-xs font-medium text-vesta-text mb-1 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-vesta-rose" />
+                    City / Venue
+                  </label>
+                  <input
+                    id="new-loc"
+                    type="text"
+                    value={newLocation}
+                    onChange={(e) => setNewLocation(e.target.value)}
+                    placeholder="e.g. Udaipur, Rajasthan"
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text placeholder-vesta-muted focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Guest Count & Total Budget */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-guests" className="block text-xs font-medium text-vesta-text mb-1 flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5 text-vesta-iris" />
+                    Guest Count
+                  </label>
+                  <input
+                    id="new-guests"
+                    type="number"
+                    min="1"
+                    max="100000"
+                    value={newGuests}
+                    onChange={(e) => setNewGuests(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text font-mono focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="new-budget" className="block text-xs font-medium text-vesta-text mb-1 flex items-center gap-1">
+                    <Coins className="w-3.5 h-3.5 text-vesta-foam" />
+                    Total Budget (₹)
+                  </label>
+                  <input
+                    id="new-budget"
+                    type="number"
+                    min="10000"
+                    step="10000"
+                    value={newBudget}
+                    onChange={(e) => setNewBudget(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text font-mono focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Setting & Season */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-setting" className="block text-xs font-medium text-vesta-text mb-1">
+                    Physical Setting
+                  </label>
+                  <select
+                    id="new-setting"
+                    value={newSetting}
+                    onChange={(e) => setNewSetting(e.target.value as 'indoor' | 'outdoor' | 'hybrid')}
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  >
+                    <option value="indoor">Indoor (Ballroom/Hall)</option>
+                    <option value="outdoor">Outdoor (Lawn/Courtyard)</option>
+                    <option value="hybrid">Hybrid (Indoor + Canopy/Courtyard)</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="new-season" className="block text-xs font-medium text-vesta-text mb-1">
+                    Season
+                  </label>
+                  <select
+                    id="new-season"
+                    value={newSeason}
+                    onChange={(e) => setNewSeason(e.target.value as EventProject['season'])}
+                    className="w-full px-3 py-2 rounded-xl bg-vesta-surface border border-vesta-border text-xs text-vesta-text focus:ring-2 focus:ring-vesta-iris focus:outline-none"
+                  >
+                    <option value="winter">Winter</option>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="monsoon">Monsoon (Rain Contingency)</option>
+                    <option value="autumn">Autumn</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-vesta-border/60">
+                <button
+                  type="button"
+                  onClick={() => setIsNewEventModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-vesta-gold to-vesta-rose text-vesta-midnight hover:opacity-95 transition-opacity shadow-lg shadow-vesta-gold/20"
+                >
+                  Scaffold Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
