@@ -82,3 +82,14 @@ html.high-contrast-aaa textarea {
 html.high-contrast-aaa .text-vesta-muted {
   color: #e2e8f0 !important;
 }
+
+/* ─── Scrollbar Utilities ─────────────────────────────────────────────────── */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

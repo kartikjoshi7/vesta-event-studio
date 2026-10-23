@@ -59,34 +59,78 @@ export function App() {
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
+  // Global Keyboard Navigation (1-5 for tabs, Ctrl+K for Copilot)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCopilotOpen((prev) => !prev);
+      } else if (e.key === '1') {
+        setActiveTab('overview');
+      } else if (e.key === '2') {
+        setActiveTab('budget');
+      } else if (e.key === '3') {
+        setActiveTab('timeline');
+      } else if (e.key === '4') {
+        setActiveTab('vendors');
+      } else if (e.key === '5') {
+        setActiveTab('ideation');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const navTabs = [
     {
       id: 'overview' as ActiveTab,
       label: 'Executive Overview',
+      shortLabel: 'Overview',
+      shortcut: '1',
       icon: <LayoutDashboard className="w-4 h-4" />,
       badge: `${readinessMetrics.overallScore}%`,
     },
     {
       id: 'budget' as ActiveTab,
       label: 'Budget Architect',
+      shortLabel: 'Budget',
+      shortcut: '2',
       icon: <Coins className="w-4 h-4" />,
       badge: `${activeProject.currency} ${(activeProject.totalBudget / 1000).toFixed(0)}k`,
     },
     {
       id: 'timeline' as ActiveTab,
       label: 'Timeline & Run-of-Show',
+      shortLabel: 'Timeline',
+      shortcut: '3',
       icon: <Calendar className="w-4 h-4" />,
       badge: `${activeProject.timelineItems.length}`,
     },
     {
       id: 'vendors' as ActiveTab,
       label: 'Smart Vendor CRM',
+      shortLabel: 'Vendors',
+      shortcut: '4',
       icon: <ShieldCheck className="w-4 h-4" />,
       badge: `${activeProject.vendors.length}`,
     },
     {
       id: 'ideation' as ActiveTab,
       label: 'Ideation Studio',
+      shortLabel: 'Creative',
+      shortcut: '5',
       icon: <Sparkles className="w-4 h-4" />,
       badge: `${activeProject.savedIdeas.length}`,
     },
@@ -114,57 +158,76 @@ export function App() {
         onOpenCopilot={() => setIsCopilotOpen(true)}
       />
 
-      {/* ─── Primary Navigation Bar ─────────────────────────────────────── */}
+      {/* ─── Streamlined Primary Navigation Bar ─────────────────────────── */}
       <nav
         role="navigation"
         aria-label="Planning Modules Navigation"
-        className="w-full border-b border-vesta-border bg-vesta-surface/40 backdrop-blur-md sticky top-20 z-30"
+        className="w-full border-b border-vesta-border/60 bg-vesta-midnight/80 backdrop-blur-xl sticky top-16 z-30 transition-all shadow-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div
-            role="tablist"
-            aria-label="Event Planning Modules"
-            className="flex items-center gap-1 sm:gap-2 overflow-x-auto py-2.5 no-scrollbar"
-          >
-            {navTabs.map((tab) => {
-              const isActive = activeTab === tab.id;
+          <div className="flex items-center justify-between gap-4 py-2">
+            {/* Module Tabs Segmented Control */}
+            <div
+              role="tablist"
+              aria-label="Event Planning Modules"
+              className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar"
+            >
+              {navTabs.map((tab) => {
+                const isActive = activeTab === tab.id;
 
-              return (
-                <button
-                  key={tab.id}
-                  id={`tab-${tab.id}`}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls={`panel-${tab.id}`}
-                  tabIndex={isActive ? 0 : -1}
-                  onClick={() => setActiveTab(tab.id)}
-                  type="button"
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
-                    isActive
-                      ? 'bg-vesta-card text-vesta-gold border border-vesta-gold/30 shadow-md shadow-vesta-gold/5'
-                      : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface/80 border border-transparent'
-                  }`}
-                >
-                  <span
-                    className={
-                      isActive ? 'text-vesta-gold' : 'text-vesta-muted group-hover:text-vesta-text'
-                    }
-                  >
-                    {tab.icon}
-                  </span>
-                  <span>{tab.label}</span>
-                  <span
-                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                return (
+                  <button
+                    key={tab.id}
+                    id={`tab-${tab.id}`}
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`panel-${tab.id}`}
+                    tabIndex={isActive ? 0 : -1}
+                    onClick={() => setActiveTab(tab.id)}
+                    type="button"
+                    className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
                       isActive
-                        ? 'bg-vesta-gold/20 text-vesta-gold'
-                        : 'bg-vesta-surface text-vesta-muted'
+                        ? 'bg-vesta-surface text-vesta-gold border border-vesta-gold/30 shadow-sm'
+                        : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface/50 border border-transparent'
                     }`}
                   >
-                    {tab.badge}
-                  </span>
-                </button>
-              );
-            })}
+                    <span
+                      className={
+                        isActive ? 'text-vesta-gold' : 'text-vesta-muted group-hover:text-vesta-text'
+                      }
+                    >
+                      {tab.icon}
+                    </span>
+                    <span>{tab.label}</span>
+                    <span
+                      className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md ${
+                        isActive
+                          ? 'bg-vesta-gold/20 text-vesta-gold'
+                          : 'bg-vesta-card/80 text-vesta-muted'
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                    <span className="hidden xl:inline-block text-[9px] font-mono opacity-30 group-hover:opacity-60 ml-0.5">
+                      [{tab.shortcut}]
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right Context Summary Breadcrumb */}
+            <div className="hidden xl:flex items-center gap-2 text-xs text-vesta-muted shrink-0 font-medium">
+              <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 text-vesta-text">
+                📍 {activeProject.location.split(',')[0]}
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 text-vesta-iris">
+                👥 {activeProject.guestCount}
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 font-mono text-vesta-gold">
+                💰 {activeProject.currency} {(activeProject.totalBudget / 100000).toFixed(1)}L
+              </span>
+            </div>
           </div>
         </div>
       </nav>

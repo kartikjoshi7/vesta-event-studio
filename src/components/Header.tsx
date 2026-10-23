@@ -22,6 +22,8 @@ import {
   FileText,
   Bot,
   Contrast,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import type { EventProject, EventVertical } from '../types/event';
 import { personaMetadata } from '../data/verticalPersonas';
@@ -52,6 +54,34 @@ export const Header: React.FC<HeaderProps> = ({
   // Modal state
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [isNewEventModalOpen, setIsNewEventModalOpen] = useState(false);
+  const [isEventMenuOpen, setIsEventMenuOpen] = useState(false);
+  const eventMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Close menus & modals on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsApiKeyModalOpen(false);
+        setIsNewEventModalOpen(false);
+        setIsEventMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Click outside to close Event Menu
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (eventMenuRef.current && !eventMenuRef.current.contains(e.target as Node)) {
+        setIsEventMenuOpen(false);
+      }
+    };
+    if (isEventMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isEventMenuOpen]);
 
   // API Key local state
   const [apiKeyInput, setApiKeyInput] = useState('');
@@ -103,18 +133,6 @@ export const Header: React.FC<HeaderProps> = ({
       return next;
     });
   };
-
-  // Close modals on Escape key
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsApiKeyModalOpen(false);
-        setIsNewEventModalOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const handleSaveApiKey = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,138 +203,182 @@ export const Header: React.FC<HeaderProps> = ({
     <header
       role="banner"
       aria-label="Application Header"
-      className="sticky top-0 z-40 w-full border-b border-vesta-border bg-vesta-midnight/80 backdrop-blur-xl transition-all"
+      className="sticky top-0 z-40 w-full border-b border-vesta-border/60 bg-vesta-midnight/90 backdrop-blur-xl transition-all"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-        {/* Brand Logo & Title */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div
-            className="w-11 h-11 rounded-xl bg-gradient-to-tr from-vesta-gold via-vesta-iris to-vesta-foam p-0.5 shadow-lg shadow-vesta-gold/10"
-            aria-hidden="true"
-          >
-            <div className="w-full h-full bg-vesta-surface rounded-[10px] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-vesta-gold animate-pulse" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo + Unified Event Switcher */}
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-9 h-9 rounded-xl bg-gradient-to-tr from-vesta-gold via-vesta-iris to-vesta-foam p-0.5 shadow-md shadow-vesta-gold/10"
+              aria-hidden="true"
+            >
+              <div className="w-full h-full bg-vesta-surface rounded-[9px] flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-vesta-gold animate-pulse" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-vesta-text via-vesta-gold to-vesta-foam bg-clip-text text-transparent">
+                  VESTA
+                </span>
+                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-vesta-iris/15 text-vesta-iris border border-vesta-iris/30 tracking-wide uppercase">
+                  Studio OS
+                </span>
+              </div>
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-vesta-text via-vesta-gold to-vesta-foam bg-clip-text text-transparent">
-                VESTA
+
+          <div className="h-5 w-px bg-vesta-border/80 hidden sm:block" aria-hidden="true" />
+
+          {/* Event Switcher Dropdown */}
+          <div ref={eventMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsEventMenuOpen((prev) => !prev)}
+              aria-expanded={isEventMenuOpen}
+              aria-haspopup="menu"
+              aria-label={`Current celebration: ${activeProject.title}. Click to switch.`}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-vesta-surface/90 hover:bg-vesta-surface border border-vesta-border/80 hover:border-vesta-iris/50 text-xs font-medium text-vesta-text transition-all focus:outline-none focus:ring-2 focus:ring-vesta-iris shadow-sm"
+            >
+              <span className="text-sm">{personaMetadata[activeProject.vertical]?.emoji || '✨'}</span>
+              <span className="max-w-[130px] sm:max-w-[180px] lg:max-w-[220px] truncate font-semibold">
+                {activeProject.title}
               </span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-vesta-iris/15 text-vesta-iris border border-vesta-iris/30 tracking-wide uppercase">
-                Studio OS
-              </span>
-            </div>
-            <p className="text-[11px] text-vesta-muted font-medium tracking-tight">
-              Context-Aware Celebration & Event Operating System
-            </p>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-vesta-muted transition-transform duration-200 ${
+                  isEventMenuOpen ? 'rotate-180 text-vesta-iris' : ''
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isEventMenuOpen && (
+              <div
+                role="menu"
+                aria-orientation="vertical"
+                className="absolute left-0 mt-2 w-80 sm:w-96 rounded-2xl bg-vesta-card/95 border border-vesta-border/80 p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-1"
+              >
+                <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-vesta-muted flex items-center justify-between">
+                  <span>Switch Celebration Blueprint</span>
+                  <span className="text-vesta-iris font-mono">{projects.length} Available</span>
+                </div>
+
+                {projects.map((project) => {
+                  const isActive = project.id === activeProject.id;
+                  const meta = personaMetadata[project.vertical] || { emoji: '✨', tagline: project.vertical };
+                  return (
+                    <button
+                      key={project.id}
+                      role="menuitem"
+                      type="button"
+                      onClick={() => {
+                        onSelectVertical(project.id);
+                        setIsEventMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all text-xs ${
+                        isActive
+                          ? 'bg-vesta-surface border border-vesta-gold/30 text-vesta-gold shadow-sm font-semibold'
+                          : 'hover:bg-vesta-surface/70 text-vesta-text'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <span className="text-base p-1.5 rounded-lg bg-vesta-card border border-vesta-border/60">
+                          {meta.emoji}
+                        </span>
+                        <div className="truncate">
+                          <div className="truncate font-medium">{project.title}</div>
+                          <div className="text-[10px] text-vesta-muted truncate">
+                            {project.location} · {project.guestCount} guests · {project.currency} {(project.totalBudget / 100000).toFixed(1)}L
+                          </div>
+                        </div>
+                      </div>
+                      {isActive && <Check className="w-4 h-4 text-vesta-gold shrink-0 ml-2" />}
+                    </button>
+                  );
+                })}
+
+                <div className="pt-1 border-t border-vesta-border/60 mt-1 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEventMenuOpen(false);
+                      setIsNewEventModalOpen(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-vesta-iris/15 hover:bg-vesta-iris/25 text-vesta-iris border border-vesta-iris/30 text-xs font-semibold transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create New Event</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEventMenuOpen(false);
+                      onResetDemoData();
+                    }}
+                    title="Reset to challenge default demo personas"
+                    className="p-2 rounded-xl text-vesta-muted hover:text-white hover:bg-vesta-surface transition-all border border-transparent hover:border-vesta-border"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Center: Vertical Persona Switcher */}
-        <nav
-          role="navigation"
-          aria-label="Event Switcher"
-          className="hidden md:flex items-center gap-1.5 p-1.5 rounded-xl bg-vesta-surface/80 border border-vesta-border shadow-inner"
-        >
-          {projects.map((project) => {
-            const isActive = project.id === activeProject.id;
-            const meta = personaMetadata[project.vertical] || {
-              emoji: '✨',
-              tagline: project.vertical,
-            };
-
-            return (
-              <button
-                key={project.id}
-                onClick={() => onSelectVertical(project.id)}
-                type="button"
-                aria-pressed={isActive}
-                aria-label={`Select ${project.title}`}
-                className={`relative px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
-                  isActive
-                    ? 'bg-vesta-card text-vesta-gold shadow-md border border-vesta-gold/30 font-semibold'
-                    : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface'
-                }`}
-              >
-                <span>{meta.emoji}</span>
-                <span className="max-w-[130px] truncate">{project.title.split(' ')[0]}</span>
-                {isActive && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full bg-vesta-gold animate-ping"
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => setIsNewEventModalOpen(true)}
-            type="button"
-            aria-label="Create Custom Event"
-            className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-vesta-iris hover:text-white hover:bg-vesta-iris/20 transition-all flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-vesta-iris"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New</span>
-          </button>
-        </nav>
-
-        {/* Right Actions: Live Readiness Pill + AI Engine Key Config */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Right Actions: Live Readiness + AI Status + Export + AAA + Copilot */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Readiness Score Pill */}
           <div
             role="status"
             aria-label={`Event Readiness Score: ${score} percent`}
-            title={`Event Readiness: ${score}/100 - Budget ${readinessMetrics.budgetHealth}%, Timeline ${readinessMetrics.timelineHealth}%, Vendors ${readinessMetrics.vendorReadiness}%`}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold backdrop-blur transition-all shadow-sm ${scoreColor}`}
+            title={`Readiness: ${score}/100 - Budget ${readinessMetrics.budgetHealth}%, Timeline ${readinessMetrics.timelineHealth}%, Vendors ${readinessMetrics.vendorReadiness}%`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold backdrop-blur transition-all shadow-sm ${scoreColor}`}
           >
-            <div className="flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span
-                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    score >= 80
-                      ? 'bg-vesta-success'
-                      : score >= 60
-                      ? 'bg-vesta-warning'
-                      : 'bg-vesta-danger'
-                  }`}
-                />
-                <span
-                  className={`relative inline-flex rounded-full h-2 w-2 ${
-                    score >= 80
-                      ? 'bg-vesta-success'
-                      : score >= 60
-                      ? 'bg-vesta-warning'
-                      : 'bg-vesta-danger'
-                  }`}
-                />
-              </span>
-              <span className="font-mono text-sm tracking-tight">{score}%</span>
-            </div>
-            <span className="hidden sm:inline text-[11px] font-medium opacity-80 border-l border-current/20 pl-2">
-              Readiness
+            <span className="relative flex h-2 w-2">
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  score >= 80
+                    ? 'bg-vesta-success'
+                    : score >= 60
+                    ? 'bg-vesta-warning'
+                    : 'bg-vesta-danger'
+                }`}
+              />
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  score >= 80
+                    ? 'bg-vesta-success'
+                    : score >= 60
+                    ? 'bg-vesta-warning'
+                    : 'bg-vesta-danger'
+                }`}
+              />
+            </span>
+            <span className="font-mono text-xs">{score}%</span>
+            <span className="hidden md:inline text-[10px] font-medium opacity-80 pl-1 border-l border-current/20">
+              Ready
             </span>
           </div>
 
-          {/* AI Engine Config Button */}
+          {/* AI Engine Status Pill */}
           <button
             onClick={() => setIsApiKeyModalOpen(true)}
             type="button"
             aria-haspopup="dialog"
             aria-expanded={isApiKeyModalOpen}
             aria-label="AI Engine and API Key settings"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
               hasLiveApiKey
                 ? 'bg-vesta-foam/10 text-vesta-foam border-vesta-foam/30 hover:bg-vesta-foam/20'
-                : 'bg-vesta-surface text-vesta-muted border-vesta-border hover:text-vesta-text hover:border-vesta-iris/40'
+                : 'bg-vesta-surface text-vesta-muted border-vesta-border/80 hover:text-vesta-text hover:border-vesta-iris/40'
             }`}
           >
-            <Cpu className="w-3.5 h-3.5" />
-            <span className="hidden lg:inline">
-              {hasLiveApiKey ? 'Gemini 2.5 Live' : 'Smart Engine'}
+            <Cpu className="w-3.5 h-3.5 text-vesta-foam" />
+            <span className="hidden lg:inline text-xs">
+              {hasLiveApiKey ? 'Gemini 2.5' : 'Local AI'}
             </span>
-            <span className="lg:hidden">AI</span>
           </button>
 
           {/* Export Blueprint Button */}
@@ -325,7 +387,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onOpenExportModal}
               type="button"
               aria-label="Export Event Blueprint"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-vesta-surface hover:bg-vesta-border border border-vesta-border text-vesta-text hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-vesta-foam"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-vesta-surface hover:bg-vesta-card border border-vesta-border/80 text-vesta-text hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-vesta-foam"
             >
               <FileText className="w-3.5 h-3.5 text-vesta-foam" />
               <span className="hidden sm:inline">Export</span>
@@ -339,26 +401,29 @@ export const Header: React.FC<HeaderProps> = ({
             aria-pressed={isHighContrast}
             aria-label="Toggle WCAG 2.1 AAA High Contrast Mode"
             title="Toggle WCAG 2.1 AAA High Contrast Mode (>7:1 ratio)"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-gold ${
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-gold ${
               isHighContrast
                 ? 'bg-yellow-400 text-black border-yellow-400 shadow-md font-bold'
-                : 'bg-vesta-surface text-vesta-muted border-vesta-border hover:text-vesta-text hover:border-yellow-400/40'
+                : 'bg-vesta-surface text-vesta-muted border-vesta-border/80 hover:text-vesta-text hover:border-yellow-400/40'
             }`}
           >
             <Contrast className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">AAA</span>
           </button>
 
-          {/* AI Copilot Drawer Button */}
+          {/* AI Copilot Button */}
           {onOpenCopilot && (
             <button
               onClick={onOpenCopilot}
               type="button"
-              aria-label="Open AI Copilot Drawer"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-vesta-iris to-vesta-pine text-white hover:opacity-90 transition-all shadow-md shadow-vesta-iris/20 focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+              aria-label="Open AI Copilot Drawer (Ctrl+K)"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-vesta-iris to-vesta-pine text-white hover:opacity-90 transition-all shadow-md shadow-vesta-iris/20 focus:outline-none focus:ring-2 focus:ring-vesta-iris"
             >
               <Bot className="w-3.5 h-3.5 text-vesta-gold" />
               <span className="hidden sm:inline">Copilot</span>
+              <kbd className="hidden md:inline-block px-1 py-0.2 rounded bg-black/30 text-[9px] font-mono text-white/80">
+                ⌘K
+              </kbd>
             </button>
           )}
         </div>

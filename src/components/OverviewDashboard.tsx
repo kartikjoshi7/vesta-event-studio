@@ -22,7 +22,6 @@ import {
   Compass,
   ArrowRight,
   ShieldCheck,
-  Check,
 } from 'lucide-react';
 import type { EventProject } from '../types/event';
 import { personaMetadata } from '../data/verticalPersonas';
@@ -98,43 +97,49 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
   const perGuestCost = Math.round(project.totalBudget / Math.max(1, project.guestCount));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      {/* ─── Hero Summary Card ────────────────────────────────────────── */}
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* ─── Hero Event Identity Card ─────────────────────────────────── */}
       <section
         aria-label="Event Executive Summary"
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-vesta-card via-vesta-surface to-vesta-card border border-vesta-border p-6 sm:p-8 shadow-2xl"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-vesta-card/90 via-vesta-surface/90 to-vesta-card/90 border border-vesta-border/70 p-6 sm:p-8 shadow-xl backdrop-blur-xl"
       >
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-vesta-iris/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-80 h-80 bg-vesta-gold/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-vesta-iris/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-80 h-80 bg-vesta-gold/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 space-y-6">
-          {/* Top Row: Vertical Badge & Persona Tag */}
+        <div className="relative z-10 space-y-5">
+          {/* Top Row: Vertical Badge & Persona Tag + Setting/Season */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <span className="text-2xl">{meta.emoji}</span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-vesta-gold/15 text-vesta-gold border border-vesta-gold/30 tracking-wide uppercase">
-                {project.vertical} blueprint
-              </span>
-              <span className="text-xs text-vesta-muted">Hosted by {project.personaName}</span>
+              <span className="text-xl sm:text-2xl p-2 rounded-xl bg-vesta-card/80 border border-vesta-border/80 shadow-sm">{meta.emoji}</span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-vesta-gold/15 text-vesta-gold border border-vesta-gold/30 tracking-wide uppercase">
+                    {project.vertical} blueprint
+                  </span>
+                  <span className="text-xs text-vesta-muted">Hosted by <strong className="text-vesta-text font-medium">{project.personaName}</strong></span>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-1 rounded-lg bg-vesta-surface border border-vesta-border text-vesta-foam font-medium capitalize">
-                Setting: {project.indoorOutdoor}
+              <span className="text-xs px-2.5 py-1 rounded-xl bg-vesta-surface/80 border border-vesta-border/80 text-vesta-foam font-medium capitalize flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-vesta-foam" />
+                {project.indoorOutdoor} setting
               </span>
-              <span className="text-xs px-2.5 py-1 rounded-lg bg-vesta-surface border border-vesta-border text-vesta-iris font-medium capitalize">
-                Season: {project.season}
+              <span className="text-xs px-2.5 py-1 rounded-xl bg-vesta-surface/80 border border-vesta-border/80 text-vesta-iris font-medium capitalize flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-vesta-iris" />
+                {project.season} season
               </span>
             </div>
           </div>
 
           {/* Title & Location */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-vesta-text">
+          <div className="pt-1">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-vesta-text">
               {project.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-vesta-muted mt-2">
-              <span className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-5 text-xs text-vesta-muted mt-2.5">
+              <span className="flex items-center gap-1.5 font-medium text-vesta-text/90">
                 <Calendar className="w-4 h-4 text-vesta-gold" />
                 {new Date(project.date).toLocaleDateString('en-US', {
                   weekday: 'short',
@@ -143,132 +148,163 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                   day: 'numeric',
                 })}
               </span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 font-medium text-vesta-text/90">
                 <MapPin className="w-4 h-4 text-vesta-rose" />
                 {project.location}
               </span>
             </div>
           </div>
 
-          {/* Quick Metrics Bar & Inline Editor */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-vesta-surface/70 border border-vesta-border/80">
-            {/* Total Budget */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-medium text-vesta-muted flex items-center gap-1">
-                <Coins className="w-3.5 h-3.5 text-vesta-gold" />
-                Total Budget
-              </div>
-              {isEditingMetrics ? (
-                <input
-                  type="number"
-                  aria-label="Total event budget"
-                  value={budgetInput}
-                  onChange={(e) => setBudgetInput(e.target.value)}
-                  className="w-full px-2 py-1 rounded bg-vesta-card border border-vesta-iris text-xs text-vesta-text font-mono"
-                />
-              ) : (
-                <div className="text-base font-bold font-mono text-vesta-text">
-                  {project.currency} {project.totalBudget.toLocaleString()}
-                </div>
-              )}
-            </div>
-
-            {/* Guest Count */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-medium text-vesta-muted flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-vesta-iris" />
-                Guest Count
-              </div>
-              {isEditingMetrics ? (
-                <input
-                  type="number"
-                  aria-label="Total guest count"
-                  value={guestsInput}
-                  onChange={(e) => setGuestsInput(e.target.value)}
-                  className="w-full px-2 py-1 rounded bg-vesta-card border border-vesta-iris text-xs text-vesta-text font-mono"
-                />
-              ) : (
-                <div className="text-base font-bold font-mono text-vesta-text">
-                  {project.guestCount} Attendees
-                </div>
-              )}
-            </div>
-
-            {/* Per-Guest Allocation */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-medium text-vesta-muted flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-vesta-foam" />
-                Cost Per Head
-              </div>
-              <div className="text-base font-bold font-mono text-vesta-foam">
-                {project.currency} {perGuestCost.toLocaleString()}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex items-center justify-end">
-              {isEditingMetrics ? (
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setIsEditingMetrics(false)}
-                    type="button"
-                    className="px-2.5 py-1 text-xs text-vesta-muted hover:text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveMetrics}
-                    type="button"
-                    className="px-3 py-1 rounded-lg text-xs font-semibold bg-vesta-success text-vesta-midnight hover:opacity-90 flex items-center gap-1"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    Apply
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    setBudgetInput(project.totalBudget.toString());
-                    setGuestsInput(project.guestCount.toString());
-                    setIsEditingMetrics(true);
-                  }}
-                  type="button"
-                  className="px-3 py-1.5 rounded-xl text-xs font-medium bg-vesta-card hover:bg-vesta-border border border-vesta-border text-vesta-iris transition-colors"
-                >
-                  Quick Rebalance
-                </button>
-              )}
-            </div>
-          </div>
-
           {/* Vibe Tags & Dietary Tags */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-[11px] font-medium text-vesta-muted uppercase tracking-wider mr-1">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-vesta-border/50">
+            <span className="text-[10px] font-semibold text-vesta-muted uppercase tracking-wider mr-1">
               Vibes:
             </span>
             {project.vibeTags.map((tag, i) => (
               <span
                 key={i}
-                className="px-2.5 py-0.5 rounded-full text-[11px] bg-vesta-surface text-vesta-text/80 border border-vesta-border"
+                className="px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-vesta-surface/80 text-vesta-text/80 border border-vesta-border/70"
               >
                 #{tag}
               </span>
             ))}
             {project.dietaryRestrictions.length > 0 && (
               <>
-                <span className="text-[11px] font-medium text-vesta-muted uppercase tracking-wider ml-3 mr-1">
+                <span className="text-[10px] font-semibold text-vesta-muted uppercase tracking-wider ml-2 mr-1">
                   Dietary:
                 </span>
                 {project.dietaryRestrictions.map((diet, i) => (
                   <span
                     key={i}
-                    className="px-2 py-0.5 rounded-md text-[11px] bg-vesta-pine/20 text-vesta-foam border border-vesta-pine/40"
+                    className="px-2.5 py-0.5 rounded-lg text-[11px] font-medium bg-vesta-pine/20 text-vesta-foam border border-vesta-pine/40"
                   >
                     {diet}
                   </span>
                 ))}
               </>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 3 Key Financial & Scale Stat Cards ───────────────────────── */}
+      <section aria-label="Core Metrics" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Card 1: Total Budget */}
+        <div className="rounded-2xl bg-vesta-card/90 border border-vesta-border/80 p-5 shadow-lg backdrop-blur space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-vesta-muted">
+              <div className="p-1.5 rounded-lg bg-vesta-gold/15 text-vesta-gold">
+                <Coins className="w-4 h-4" />
+              </div>
+              <span>Total Budget</span>
+            </div>
+            {isEditingMetrics ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingMetrics(false)}
+                  className="text-[11px] text-vesta-muted hover:text-white px-1.5 py-0.5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveMetrics}
+                  className="text-[11px] font-semibold text-vesta-midnight bg-vesta-success px-2 py-0.5 rounded-md hover:opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setBudgetInput(project.totalBudget.toString());
+                  setGuestsInput(project.guestCount.toString());
+                  setIsEditingMetrics(true);
+                }}
+                className="text-[11px] font-medium text-vesta-iris hover:text-white px-2 py-0.5 rounded-md bg-vesta-surface border border-vesta-border/80 hover:border-vesta-iris transition-colors"
+              >
+                Quick Edit
+              </button>
+            )}
+          </div>
+
+          {isEditingMetrics ? (
+            <input
+              type="number"
+              aria-label="Total event budget"
+              value={budgetInput}
+              onChange={(e) => setBudgetInput(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-xl bg-vesta-surface border border-vesta-iris text-sm text-vesta-text font-mono focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+            />
+          ) : (
+            <div className="text-2xl font-extrabold font-mono text-vesta-text tracking-tight">
+              {project.currency} {project.totalBudget.toLocaleString()}
+            </div>
+          )}
+
+          <div className="text-[11px] text-vesta-muted flex items-center justify-between pt-1 border-t border-vesta-border/40">
+            <span>Allocated: 100%</span>
+            <span className="text-vesta-success font-medium">Healthy Buffer</span>
+          </div>
+        </div>
+
+        {/* Card 2: Guest Scale */}
+        <div className="rounded-2xl bg-vesta-card/90 border border-vesta-border/80 p-5 shadow-lg backdrop-blur space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-vesta-muted">
+              <div className="p-1.5 rounded-lg bg-vesta-iris/15 text-vesta-iris">
+                <Users className="w-4 h-4" />
+              </div>
+              <span>Guest Scale</span>
+            </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-vesta-surface text-vesta-iris border border-vesta-iris/30 font-medium">
+              Confirmed RSVPs
+            </span>
+          </div>
+
+          {isEditingMetrics ? (
+            <input
+              type="number"
+              aria-label="Total guest count"
+              value={guestsInput}
+              onChange={(e) => setGuestsInput(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-xl bg-vesta-surface border border-vesta-iris text-sm text-vesta-text font-mono focus:outline-none focus:ring-2 focus:ring-vesta-iris"
+            />
+          ) : (
+            <div className="text-2xl font-extrabold font-mono text-vesta-text tracking-tight">
+              {project.guestCount} <span className="text-sm font-sans font-medium text-vesta-muted">Attendees</span>
+            </div>
+          )}
+
+          <div className="text-[11px] text-vesta-muted flex items-center justify-between pt-1 border-t border-vesta-border/40">
+            <span>Capacity Target</span>
+            <span className="text-vesta-iris font-medium">Managed Seating</span>
+          </div>
+        </div>
+
+        {/* Card 3: Per-Head Investment */}
+        <div className="rounded-2xl bg-vesta-card/90 border border-vesta-border/80 p-5 shadow-lg backdrop-blur space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-vesta-muted">
+              <div className="p-1.5 rounded-lg bg-vesta-foam/15 text-vesta-foam">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <span>Cost Per Head</span>
+            </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-vesta-surface text-vesta-foam border border-vesta-foam/30 font-medium">
+              All-Inclusive
+            </span>
+          </div>
+
+          <div className="text-2xl font-extrabold font-mono text-vesta-foam tracking-tight">
+            {project.currency} {perGuestCost.toLocaleString()} <span className="text-sm font-sans font-medium text-vesta-muted">/ person</span>
+          </div>
+
+          <div className="text-[11px] text-vesta-muted flex items-center justify-between pt-1 border-t border-vesta-border/40">
+            <span>Catering, Decor & Venue</span>
+            <span className="text-vesta-foam font-medium">Optimal Tier</span>
           </div>
         </div>
       </section>
