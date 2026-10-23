@@ -8,6 +8,9 @@
 ![OWASP Hardened](https://img.shields.io/badge/OWASP-Security%20Hardened-green?style=flat-square)
 ![Repo Size](https://img.shields.io/badge/Repo%20Size-%3C%201%20MB%20(291%20KB)-brightgreen?style=flat-square)
 
+**GitHub Repository:** [https://github.com/kartikjoshi7/vesta-event-studio](https://github.com/kartikjoshi7/vesta-event-studio)  
+**Live Production URL:** *(to be updated upon Vercel deployment)*
+
 ---
 
 ## 1. Executive Overview & Chosen Verticals
@@ -166,12 +169,12 @@ Executes live parametric mutations on workspace state:
 
 | Evaluation Pillar | Implementation in Vesta Event Studio | Key Source Files |
 | :--- | :--- | :--- |
-| **1. Problem Statement Alignment** | Fully addresses celebration planning across 3 distinct vertical personas (Weddings, Birthdays, Community Summits). Unifies budgets, day-of schedules, vendor contracts, and context-aware ideation into a cohesive OS. | [`src/types/event.ts`](file:///c:/Prompt%20Wars/challenge%205/src/types/event.ts)<br>[`src/data/verticalPersonas.ts`](file:///c:/Prompt%20Wars/challenge%205/src/data/verticalPersonas.ts)<br>[`src/components/OverviewDashboard.tsx`](file:///c:/Prompt%20Wars/challenge%205/src/components/OverviewDashboard.tsx) |
-| **2. Code Quality & Modularity** | Clean TypeScript 5 architecture in strict mode (zero `any` types). Atomic component hierarchy, reusable custom hooks (`useEventWorkspace`), functional pure services, and zero dead code. Oxlint reports 0 warnings and 0 errors. | [`src/hooks/useEventWorkspace.ts`](file:///c:/Prompt%20Wars/challenge%205/src/hooks/useEventWorkspace.ts)<br>[`src/services/contextEngine.ts`](file:///c:/Prompt%20Wars/challenge%205/src/services/contextEngine.ts)<br>[`src/services/aiService.ts`](file:///c:/Prompt%20Wars/challenge%205/src/services/aiService.ts) |
-| **3. Security & OWASP Defense** | OWASP defensive security headers in `vercel.json` (`nosniff`, `DENY` clickjacking, strict HSTS, Referrer-Policy, strict Permissions-Policy). Client-side DOM sanitization (`escapeHtml`, `sanitizeUserInput`), sliding-window rate limiting (`checkRateLimit`), and zero API key leakage in logs. | [`vercel.json`](file:///c:/Prompt%20Wars/challenge%205/vercel.json)<br>[`src/utils/security.ts`](file:///c:/Prompt%20Wars/challenge%205/src/utils/security.ts)<br>[`src/utils/security.test.ts`](file:///c:/Prompt%20Wars/challenge%205/src/utils/security.test.ts) |
-| **4. Efficiency & Performance** | Pure client-side reactivity with zero server cold starts. Zero external image bloat (inline Lucide SVGs). Total git repository size is **~291 KB** (< 1 MB). Dual-engine failover provides 0 ms fallback latency when offline. | [`vite.config.ts`](file:///c:/Prompt%20Wars/challenge%205/vite.config.ts)<br>[`src/services/aiService.ts`](file:///c:/Prompt%20Wars/challenge%205/src/services/aiService.ts) |
-| **5. Testing & Verification** | 7 comprehensive Vitest suites with 39 passing tests covering unit logic, financial rebalancing algorithms, sliding-window rate limiting, offline AI failover, and end-to-end user workflows. | [`src/services/contextEngine.test.ts`](file:///c:/Prompt%20Wars/challenge%205/src/services/contextEngine.test.ts)<br>[`src/utils/security.test.ts`](file:///c:/Prompt%20Wars/challenge%205/src/utils/security.test.ts)<br>[`src/__tests__/EndToEndReadiness.test.ts`](file:///c:/Prompt%20Wars/challenge%205/src/__tests__/EndToEndReadiness.test.ts) |
-| **6. Accessibility (WCAG 2.1 AAA)** | High-Contrast design tokens (`#b5b3c6`, >7.6:1 ratio) plus dedicated High-Contrast mode (`.high-contrast-aaa`, >15:1). High-visibility focus rings (`3px solid #facc15`). Full keyboard navigation (`Tab`, `Esc`, `Enter`), explicit `<label htmlFor>` on all form inputs, and `aria-live` announcements. | [`src/index.css`](file:///c:/Prompt%20Wars/challenge%205/src/index.css)<br>[`src/components/Header.tsx`](file:///c:/Prompt%20Wars/challenge%205/src/components/Header.tsx)<br>[`src/__tests__/IdeationStudio.test.tsx`](file:///c:/Prompt%20Wars/challenge%205/src/__tests__/IdeationStudio.test.tsx) |
+| **1. Problem Statement Alignment** | Fully addresses celebration planning across 3 distinct vertical personas (Weddings, Birthdays, Community Summits). Unifies budgets, day-of schedules, vendor contracts, and context-aware ideation into a cohesive OS. | [`src/types/event.ts`](./src/types/event.ts)<br>[`src/data/verticalPersonas.ts`](./src/data/verticalPersonas.ts)<br>[`src/components/OverviewDashboard.tsx`](./src/components/OverviewDashboard.tsx) |
+| **2. Code Quality & Modularity** | Clean TypeScript 5 architecture in strict mode (zero `any` types). Atomic component hierarchy, reusable custom hooks (`useEventWorkspace`), functional pure services, and zero dead code. Oxlint reports 0 warnings and 0 errors. | [`src/hooks/useEventWorkspace.ts`](./src/hooks/useEventWorkspace.ts)<br>[`src/services/contextEngine.ts`](./src/services/contextEngine.ts)<br>[`src/services/aiService.ts`](./src/services/aiService.ts) |
+| **3. Security & OWASP Defense** | OWASP defensive security headers in `vercel.json` (`nosniff`, `DENY` clickjacking, strict HSTS, Referrer-Policy, strict Permissions-Policy). Client-side DOM sanitization (`escapeHtml`, `sanitizeUserInput`), sliding-window rate limiting (`checkRateLimit`), and zero API key leakage in logs. | [`vercel.json`](./vercel.json)<br>[`src/utils/security.ts`](./src/utils/security.ts)<br>[`src/utils/security.test.ts`](./src/utils/security.test.ts) |
+| **4. Efficiency & Performance** | Pure client-side reactivity with zero server cold starts. Zero external image bloat (inline Lucide SVGs). Total git repository size is **~291 KB** (< 1 MB). Dual-engine failover provides 0 ms fallback latency when offline. | [`vite.config.ts`](./vite.config.ts)<br>[`src/services/aiService.ts`](./src/services/aiService.ts) |
+| **5. Testing & Verification** | 7 comprehensive Vitest suites with 39 passing tests covering unit logic, financial rebalancing algorithms, sliding-window rate limiting, offline AI failover, and end-to-end user workflows. | [`src/services/contextEngine.test.ts`](./src/services/contextEngine.test.ts)<br>[`src/utils/security.test.ts`](./src/utils/security.test.ts)<br>[`src/__tests__/EndToEndReadiness.test.ts`](./src/__tests__/EndToEndReadiness.test.ts) |
+| **6. Accessibility (WCAG 2.1 AAA)** | High-Contrast design tokens (`#b5b3c6`, >7.6:1 ratio) plus dedicated High-Contrast mode (`.high-contrast-aaa`, >15:1). High-visibility focus rings (`3px solid #facc15`). Full keyboard navigation (`Tab`, `Esc`, `Enter`), explicit `<label htmlFor>` on all form inputs, and `aria-live` announcements. | [`src/index.css`](./src/index.css)<br>[`src/components/Header.tsx`](./src/components/Header.tsx)<br>[`src/__tests__/IdeationStudio.test.tsx`](./src/__tests__/IdeationStudio.test.tsx) |
 
 ---
 
@@ -262,6 +265,7 @@ Vesta Event Studio is 100% configured for 1-click deployment on **Vercel** with 
 vesta-event-studio/
 ├── .env.example                  # Environment configuration template
 ├── .gitignore                    # Strict exclusions ensuring repo size < 1 MB
+├── LICENSE                       # MIT License
 ├── index.html                    # Semantic HTML5 entry with meta tags & Schema.org JSON-LD
 ├── package.json                  # Dependencies (React 19, Lucide, Tailwind, Vitest)
 ├── vercel.json                   # OWASP security headers & protected SPA rewrites

@@ -90,6 +90,8 @@ async function callGemini(prompt: string, apiKey: string): Promise<string> {
     GEMINI_MODEL,
     'gemini-3.5-flash',
     'gemini-3-flash-preview',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
   ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
   let lastError: Error | null = null;
@@ -127,8 +129,13 @@ async function callGemini(prompt: string, apiKey: string): Promise<string> {
       return text;
     } catch (err: unknown) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      // If 404 (model retired/not found), proceed to next candidate model
-      if (lastError.message.includes('404') || lastError.message.includes('NOT_FOUND')) {
+      // If 404 (model retired/not found) or 503 (temporary spike), proceed to next candidate model
+      if (
+        lastError.message.includes('404') ||
+        lastError.message.includes('NOT_FOUND') ||
+        lastError.message.includes('503') ||
+        lastError.message.includes('UNAVAILABLE')
+      ) {
         continue;
       }
       throw lastError;
