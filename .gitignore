@@ -5,6 +5,10 @@ node_modules/
 dist/
 build/
 dist-ssr/
+*.tsbuildinfo
+
+# Vercel deployment cache
+.vercel/
 
 # Environment variables
 .env
@@ -38,3 +42,6 @@ pnpm-debug.log*
 
 # Vite
 *.local
+
+# Unused boilerplate assets
+src/assets/
