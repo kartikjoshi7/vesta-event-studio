@@ -1,22 +1,13 @@
 /**
- * @fileoverview Executive Blueprint Export & Print Modal for Vesta Event Studio.
- *
- * Provides 1-click JSON blueprint download, copyable Markdown executive brief,
- * and high-fidelity print / PDF styling for Day-Of Run-of-Show and Vendor Checklists.
+ * @fileoverview Export Event Blueprint Modal (Portaled).
  */
 
 import React, { useState, useEffect } from 'react';
-import {
-  Download,
-  Copy,
-  Printer,
-  Check,
-  X,
-  FileText,
-  Sparkles,
-} from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Download, Copy, Printer, Check, X, FileText, Sparkles } from 'lucide-react';
 import type { EventProject } from '../types/event';
 import type { ReadinessScore } from '../services/contextEngine';
+import { generateMarkdownBrief } from '../utils/blueprintExport';
 
 interface ExportBlueprintModalProps {
   isOpen: boolean;
@@ -33,7 +24,6 @@ export const ExportBlueprintModal: React.FC<ExportBlueprintModalProps> = ({
 }) => {
   const [copiedBrief, setCopiedBrief] = useState(false);
 
-  // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -45,81 +35,22 @@ export const ExportBlueprintModal: React.FC<ExportBlueprintModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
   // 1. JSON Download Generator
   const handleDownloadJson = () => {
-    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-      JSON.stringify(project, null, 2),
-    )}`;
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(project, null, 2))}`;
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', jsonString);
-    const fileName = `${project.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-blueprint.json`;
-    downloadAnchor.setAttribute('download', fileName);
+    downloadAnchor.setAttribute('download', `${project.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-blueprint.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
   };
 
   // 2. Markdown Brief Generator
-  const generateMarkdownBrief = (): string => {
-    const totalAllocated = project.budgetCategories.reduce((s, c) => s + c.allocatedAmount, 0);
-    const totalSpent = project.budgetCategories.reduce((s, c) => s + c.spentAmount, 0);
-
-    const runOfShowItems = project.timelineItems
-      .filter((i) => i.phase === 'run-of-show')
-      .map((i) => `- **${i.timeSlot || i.timeframe}**: ${i.title} (${i.status.toUpperCase()}) — Assigned to ${i.assignee || 'Lead'}`)
-      .join('\n');
-
-    const budgetTable = project.budgetCategories
-      .map((c) => `| ${c.name} | ${project.currency} ${c.allocatedAmount.toLocaleString()} | ${project.currency} ${c.spentAmount.toLocaleString()} | ${c.priority.toUpperCase()} | ${c.isLocked ? '🔒 Locked' : 'Unlocked'} |`)
-      .join('\n');
-
-    const vendorTable = project.vendors
-      .map((v) => `| ${v.vendorName} (${v.category}) | ${project.currency} ${v.estimatedCost.toLocaleString()} | ${v.status.toUpperCase()} | ${v.contactEmail} |`)
-      .join('\n');
-
-    return `# ${project.title} — Executive Blueprint
-*Generated via Vesta Event Studio · Celebration Operating System*
-
-## 1. Executive Summary
-- **Vertical:** ${project.vertical.toUpperCase()}
-- **Host / Client:** ${project.personaName}
-- **Target Date:** ${project.date}
-- **Location:** ${project.location}
-- **Guest Count:** ${project.guestCount} Attendees
-- **Total Budget:** ${project.currency} ${project.totalBudget.toLocaleString()} (Cost Per Head: ${project.currency} ${Math.round(project.totalBudget / Math.max(1, project.guestCount)).toLocaleString()})
-- **Physical Setting:** ${project.indoorOutdoor.toUpperCase()} (${project.season} season)
-- **Vibe Aesthetic:** ${project.vibeTags.join(', ')}
-- **Dietary Restrictions:** ${project.dietaryRestrictions.join(', ') || 'Standard Catering'}
-- **Overall Readiness Health:** ${readinessMetrics.overallScore}/100
-
----
-
-## 2. Day-Of Run-of-Show
-${runOfShowItems || '_No run-of-show items registered._'}
-
----
-
-## 3. Financial Allocation Matrix
-| Category | Allocated | Spent | Priority | Lock Status |
-| :--- | :--- | :--- | :--- | :--- |
-${budgetTable}
-
-- **Total Allocated:** ${project.currency} ${totalAllocated.toLocaleString()}
-- **Actual Spend:** ${project.currency} ${totalSpent.toLocaleString()}
-- **Available Buffer:** ${project.currency} ${(project.totalBudget - totalSpent).toLocaleString()}
-
----
-
-## 4. Vendor Registry & Procurement
-| Vendor | Estimated Quote | Status | Contact |
-| :--- | :--- | :--- | :--- |
-${vendorTable}
-`;
-  };
-
   const handleCopyMarkdown = async () => {
-    const brief = generateMarkdownBrief();
+    const brief = generateMarkdownBrief(project, readinessMetrics);
     try {
       await navigator.clipboard.writeText(brief);
       setCopiedBrief(true);
@@ -134,14 +65,17 @@ ${vendorTable}
     window.print();
   };
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="export-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-2xl rounded-3xl bg-vesta-card border border-vesta-border p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-2xl my-auto rounded-3xl bg-vesta-card border border-vesta-border p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -257,6 +191,7 @@ ${vendorTable}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Sparkles,
   Bot,
@@ -188,15 +189,19 @@ export const ContextCopilotDrawer: React.FC<ContextCopilotDrawerProps> = ({
   };
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
   const totalSpent = project.budgetCategories.reduce((s, c) => s + c.spentAmount, 0);
   const remainingBuffer = project.totalBudget - totalSpent;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Context AI Assistant Drawer"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-lg h-full bg-vesta-card border-l border-vesta-border shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
@@ -401,6 +406,7 @@ export const ContextCopilotDrawer: React.FC<ContextCopilotDrawerProps> = ({
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
