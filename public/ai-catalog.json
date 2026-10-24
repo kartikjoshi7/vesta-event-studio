@@ -1,0 +1,29 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Vesta Event Studio",
+    "documentationUrl": "https://vesta-event-studio.vercel.app/llms.txt"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:vesta-event-studio.vercel.app:capability:celebration-os",
+      "displayName": "Vesta Celebration & Event Planning OS",
+      "type": "text/markdown",
+      "url": "https://vesta-event-studio.vercel.app/llms-full.txt",
+      "description": "Autonomous event planning operating system with context-aware financial governance, timeline sequencing, and vendor negotiation.",
+      "tags": [
+        "event-planning",
+        "budget-management",
+        "celebration",
+        "wedding-planner",
+        "run-of-show"
+      ],
+      "representativeQueries": [
+        "Plan a 250-guest destination wedding in Udaipur with INR 25,00,000 budget",
+        "Rebalance budget when guest count changes from 200 to 250",
+        "Generate Day-Of run-of-show timeline cues for milestone birthday",
+        "Draft vendor negotiation email for 10 percent discount"
+      ]
+    }
+  ]
+}
