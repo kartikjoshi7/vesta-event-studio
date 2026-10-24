@@ -2,7 +2,7 @@
 ### Enterprise Celebration & Event Planning Operating System
 
 <p align="center">
-  <img src="public/vesta-og-banner.svg" alt="Vesta Event Studio Hero Banner" width="100%" />
+  <img src="https://raw.githubusercontent.com/kartikjoshi7/vesta-event-studio/main/public/vesta-og-banner.svg" alt="Vesta Event Studio Hero Banner" width="100%" />
 </p>
 
 ![build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)

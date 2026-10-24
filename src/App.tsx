@@ -11,7 +11,7 @@
  * Alongside the floating Context AI Copilot Drawer and Executive Blueprint Export Modal.
  */
 
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import {
   LayoutDashboard,
   Coins,
@@ -22,13 +22,27 @@ import {
 import { useEventWorkspace } from './hooks/useEventWorkspace';
 import { Header } from './components/Header';
 import { OverviewDashboard } from './components/OverviewDashboard';
-import { BudgetArchitect } from './components/BudgetArchitect';
-import { TimelineEngine } from './components/TimelineEngine';
-import { VendorCRM } from './components/VendorCRM';
-import { IdeationStudio } from './components/IdeationStudio';
-import { ContextCopilotDrawer } from './components/ContextCopilotDrawer';
-import { ExportBlueprintModal } from './components/ExportBlueprintModal';
 import './index.css';
+
+// Lazy-load non-initial tabs to slash initial bundle size and optimize LCP/FCP
+const BudgetArchitect = lazy(() =>
+  import('./components/BudgetArchitect').then((m) => ({ default: m.BudgetArchitect })),
+);
+const TimelineEngine = lazy(() =>
+  import('./components/TimelineEngine').then((m) => ({ default: m.TimelineEngine })),
+);
+const VendorCRM = lazy(() =>
+  import('./components/VendorCRM').then((m) => ({ default: m.VendorCRM })),
+);
+const IdeationStudio = lazy(() =>
+  import('./components/IdeationStudio').then((m) => ({ default: m.IdeationStudio })),
+);
+const ContextCopilotDrawer = lazy(() =>
+  import('./components/ContextCopilotDrawer').then((m) => ({ default: m.ContextCopilotDrawer })),
+);
+const ExportBlueprintModal = lazy(() =>
+  import('./components/ExportBlueprintModal').then((m) => ({ default: m.ExportBlueprintModal })),
+);
 
 type ActiveTab = 'overview' | 'budget' | 'timeline' | 'vendors' | 'ideation';
 
@@ -253,62 +267,73 @@ export function App() {
             />
           )}
 
-          {activeTab === 'budget' && (
-            <BudgetArchitect
-              project={activeProject}
-              onToggleLock={toggleCategoryLock}
-              onUpdateCategorySpend={updateCategorySpend}
-              onAddCategory={addBudgetCategory}
-              onUpdateContext={updateProjectContext}
-            />
-          )}
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-24 text-vesta-muted text-sm font-medium animate-pulse">
+                ✦ Loading module...
+              </div>
+            }
+          >
+            {activeTab === 'budget' && (
+              <BudgetArchitect
+                project={activeProject}
+                onToggleLock={toggleCategoryLock}
+                onUpdateCategorySpend={updateCategorySpend}
+                onAddCategory={addBudgetCategory}
+                onUpdateContext={updateProjectContext}
+              />
+            )}
 
-          {activeTab === 'timeline' && (
-            <TimelineEngine
-              project={activeProject}
-              onUpdateStatus={updateTimelineStatus}
-              onAddTimelineItem={addTimelineItem}
-            />
-          )}
+            {activeTab === 'timeline' && (
+              <TimelineEngine
+                project={activeProject}
+                onUpdateStatus={updateTimelineStatus}
+                onAddTimelineItem={addTimelineItem}
+              />
+            )}
 
-          {activeTab === 'vendors' && (
-            <VendorCRM
-              project={activeProject}
-              onToggleChecklistItem={toggleVendorChecklistItem}
-              onUpdateVendorStatus={updateVendorStatus}
-              onAddVendor={addVendor}
-            />
-          )}
+            {activeTab === 'vendors' && (
+              <VendorCRM
+                project={activeProject}
+                onToggleChecklistItem={toggleVendorChecklistItem}
+                onUpdateVendorStatus={updateVendorStatus}
+                onAddVendor={addVendor}
+              />
+            )}
 
-          {activeTab === 'ideation' && (
-            <IdeationStudio
-              project={activeProject}
-              onApplyIdea={applyIdeaToPlan}
-              onAddGeneratedIdeas={addGeneratedIdeas}
-            />
-          )}
+            {activeTab === 'ideation' && (
+              <IdeationStudio
+                project={activeProject}
+                onApplyIdea={applyIdeaToPlan}
+                onAddGeneratedIdeas={addGeneratedIdeas}
+              />
+            )}
+          </Suspense>
         </div>
       </main>
 
+      {/* ─── Context AI Copilot Drawer & Export Blueprint Modal (Lazy) ── */}
+      <Suspense fallback={null}>
+        {isCopilotOpen && (
+          <ContextCopilotDrawer
+            isOpen={isCopilotOpen}
+            onClose={() => setIsCopilotOpen(false)}
+            project={activeProject}
+            readinessMetrics={readinessMetrics}
+            onTriggerContingency={triggerContingencyScenario}
+            onUpdateContext={updateProjectContext}
+          />
+        )}
 
-
-      {/* ─── Context AI Copilot Drawer ──────────────────────────────────── */}
-      <ContextCopilotDrawer
-        isOpen={isCopilotOpen}
-        onClose={() => setIsCopilotOpen(false)}
-        project={activeProject}
-        readinessMetrics={readinessMetrics}
-        onTriggerContingency={triggerContingencyScenario}
-        onUpdateContext={updateProjectContext}
-      />
-
-      {/* ─── Executive Blueprint Export Modal ────────────────────────────── */}
-      <ExportBlueprintModal
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        project={activeProject}
-        readinessMetrics={readinessMetrics}
-      />
+        {isExportModalOpen && (
+          <ExportBlueprintModal
+            isOpen={isExportModalOpen}
+            onClose={() => setIsExportModalOpen(false)}
+            project={activeProject}
+            readinessMetrics={readinessMetrics}
+          />
+        )}
+      </Suspense>
 
       {/* ─── Enterprise Status Footer ───────────────────────────────────── */}
       <footer

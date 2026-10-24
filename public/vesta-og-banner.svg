@@ -63,7 +63,7 @@
       VESTA EVENT STUDIO
     </text>
     <text x="110" y="142" fill="#9ccfd8" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" letter-spacing="0.5">
-      Enterprise Celebration & Event Planning Operating System
+      Enterprise Celebration &amp; Event Planning Operating System
     </text>
 
     <!-- Subtitle / Value Proposition -->
@@ -98,7 +98,7 @@
   <g transform="translate(100, 565)">
     <line x1="0" y1="0" x2="1000" y2="0" stroke="#2e2b45" stroke-width="1.5"/>
     <text x="0" y="32" fill="#6e6a86" font-family="system-ui, sans-serif" font-size="13" font-weight="500">
-      Built for the Celebration & Event Planning AI Challenge · Zero-Latency Offline Fallback · Strict TypeScript 5
+      Built for the Celebration &amp; Event Planning AI Challenge · Zero-Latency Offline Fallback · Strict TypeScript 5
     </text>
     <text x="1000" y="32" text-anchor="end" fill="#f6c177" font-family="system-ui, sans-serif" font-size="13" font-weight="600">
       vesta-event-studio.vercel.app
