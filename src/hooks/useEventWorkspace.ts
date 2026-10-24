@@ -1,36 +1,33 @@
 /**
- * @fileoverview Persistent Workspace State Hook for Vesta Event Studio.
+ * @fileoverview Persistent Workspace State Hook for Vesta Event Studio (Facade Architecture).
  *
- * Manages event project state across vertical personas (wedding, birthday,
- * community) with persistent localStorage synchronization, defensive parsing,
- * automatic contextual rebalancing, and auditable decision logging.
+ * Serves as a backward-compatible unified facade that composes specialized domain hooks:
+ * - `useBudgetDomain` for financial line-item operations
+ * - `useTimelineDomain` for milestones and schedule cues
+ * - `useVendorDomain` for vendor CRM records and checklist verification
+ * - `useCopilotDomain` for contextual AI assistance
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   EventProject,
   EventVertical,
-  BudgetCategory,
   TimelineItem,
   VendorChecklistItem,
   PersonalizedIdea,
   ContextDecisionLog,
 } from '../types/event';
-import {
-  allPersonas,
-  personaMetadata,
-} from '../data/verticalPersonas';
+import { allPersonas, personaMetadata } from '../data/verticalPersonas';
 import {
   rebalanceBudgetForContext,
   calculateEventReadiness,
   generateContingencyPlan,
   type ReadinessScore,
 } from '../services/contextEngine';
-import {
-  safeJsonParse,
-  sanitizeUserInput,
-  validateNumberInput,
-} from '../utils/security';
+import { safeJsonParse, sanitizeUserInput, validateNumberInput } from '../utils/security';
+import { useBudgetDomain } from './useBudgetDomain';
+import { useTimelineDomain } from './useTimelineDomain';
+import { useVendorDomain } from './useVendorDomain';
 
 const STORAGE_KEY_PROJECTS = 'vesta_event_studio_projects_v1';
 const STORAGE_KEY_ACTIVE_ID = 'vesta_event_studio_active_id_v1';
@@ -159,6 +156,11 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     [activeProject.id],
   );
 
+  // Compose specialized domain hooks
+  const budgetDomain = useBudgetDomain(updateActiveProject);
+  const timelineDomain = useTimelineDomain(updateActiveProject);
+  const vendorDomain = useVendorDomain(updateActiveProject);
+
   // 1. Select vertical or specific project ID
   const selectVerticalProject = useCallback(
     (verticalOrId: EventVertical | string) => {
@@ -194,7 +196,6 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
         template.guestCount,
       );
 
-      // Clone template categories and rebalance for the new budget & guest count
       const rebalanceInitial = rebalanceBudgetForContext(
         {
           ...template,
@@ -266,7 +267,7 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     [],
   );
 
-  // 3. Update project context (budget, guests, setting) with automatic rebalance
+  // 3. Update project context with automatic rebalance
   const updateProjectContext = useCallback(
     (updates: {
       totalBudget?: number;
@@ -334,299 +335,7 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     [updateActiveProject],
   );
 
-  // 4. Toggle category lock
-  const toggleCategoryLock = useCallback(
-    (categoryId: string) => {
-      updateActiveProject((current) => {
-        let toggledName = '';
-        let wasLocked = false;
-
-        const updatedCategories = current.budgetCategories.map((cat) => {
-          if (cat.id === categoryId) {
-            toggledName = cat.name;
-            wasLocked = cat.isLocked;
-            return { ...cat, isLocked: !cat.isLocked };
-          }
-          return cat;
-        });
-
-        const log: ContextDecisionLog = {
-          id: uid('cdl'),
-          timestamp: nowIso(),
-          trigger: `Category Lock: ${toggledName}`,
-          reasoning: wasLocked
-            ? `Category "${toggledName}" unlocked; AI context engine will now adjust it during dynamic rebalancing.`
-            : `Category "${toggledName}" locked; AI context engine will preserve this fixed allocation.`,
-          actionTaken: wasLocked ? `Unlocked "${toggledName}"` : `Locked "${toggledName}"`,
-          impactLevel: 'low',
-        };
-
-        return {
-          ...current,
-          budgetCategories: updatedCategories,
-          decisionLogs: [log, ...current.decisionLogs],
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 5. Update category spend
-  const updateCategorySpend = useCallback(
-    (categoryId: string, allocated: number, spent: number) => {
-      updateActiveProject((current) => {
-        const updatedCategories = current.budgetCategories.map((cat) => {
-          if (cat.id === categoryId) {
-            return {
-              ...cat,
-              allocatedAmount: Math.max(0, allocated),
-              spentAmount: Math.max(0, spent),
-            };
-          }
-          return cat;
-        });
-
-        return {
-          ...current,
-          budgetCategories: updatedCategories,
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 6. Add budget category
-  const addBudgetCategory = useCallback(
-    (name: string, allocated: number, priority: 'high' | 'medium' | 'low') => {
-      const sanitizedName = sanitizeUserInput(name, 50);
-      if (!sanitizedName) return;
-
-      const newCategory: BudgetCategory = {
-        id: uid('cat'),
-        name: sanitizedName,
-        allocatedAmount: Math.max(0, allocated),
-        spentAmount: 0,
-        priority,
-        isLocked: false,
-        notes: 'Added by planner',
-      };
-
-      updateActiveProject((current) => {
-        const log: ContextDecisionLog = {
-          id: uid('cdl'),
-          timestamp: nowIso(),
-          trigger: `Added Budget Category: ${sanitizedName}`,
-          reasoning: `Planner added custom line-item with ${current.currency} ${allocated.toLocaleString()} allocation.`,
-          actionTaken: `Inserted category "${sanitizedName}" with ${priority.toUpperCase()} priority.`,
-          impactLevel: 'low',
-        };
-
-        return {
-          ...current,
-          budgetCategories: [...current.budgetCategories, newCategory],
-          decisionLogs: [log, ...current.decisionLogs],
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 7. Update timeline item status
-  const updateTimelineStatus = useCallback(
-    (itemId: string, status: TimelineItem['status']) => {
-      updateActiveProject((current) => {
-        let itemTitle = '';
-        let isCritical = false;
-
-        const updatedTimeline = current.timelineItems.map((item) => {
-          if (item.id === itemId) {
-            itemTitle = item.title;
-            isCritical = item.isCriticalPath;
-            return { ...item, status };
-          }
-          return item;
-        });
-
-        const newLogs = [...current.decisionLogs];
-        if (isCritical && (status === 'at-risk' || status === 'completed')) {
-          newLogs.unshift({
-            id: uid('cdl'),
-            timestamp: nowIso(),
-            trigger: `Critical Milestone Update: "${itemTitle}"`,
-            reasoning:
-              status === 'at-risk'
-                ? `Critical path item "${itemTitle}" flagged at-risk. Contingency buffers should be activated.`
-                : `Critical path item "${itemTitle}" successfully completed. Downstream schedule unlocked.`,
-            actionTaken: `Milestone status changed to ${status.toUpperCase()}.`,
-            impactLevel: status === 'at-risk' ? 'high' : 'medium',
-          });
-        }
-
-        return {
-          ...current,
-          timelineItems: updatedTimeline,
-          decisionLogs: newLogs,
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 8. Add timeline item
-  const addTimelineItem = useCallback(
-    (item: Omit<TimelineItem, 'id'>) => {
-      const newItem: TimelineItem = {
-        ...item,
-        id: uid('tl'),
-        title: sanitizeUserInput(item.title, 80),
-        timeframe: sanitizeUserInput(item.timeframe, 50),
-        timeSlot: item.timeSlot ? sanitizeUserInput(item.timeSlot, 30) : undefined,
-        category: sanitizeUserInput(item.category, 40),
-        dependencyNote: item.dependencyNote ? sanitizeUserInput(item.dependencyNote, 120) : undefined,
-        assignee: item.assignee ? sanitizeUserInput(item.assignee, 50) : undefined,
-      };
-
-      updateActiveProject((current) => ({
-        ...current,
-        timelineItems: [...current.timelineItems, newItem],
-      }));
-    },
-    [updateActiveProject],
-  );
-
-  // 9. Toggle vendor checklist item
-  const toggleVendorChecklistItem = useCallback(
-    (vendorId: string, checkId: string) => {
-      updateActiveProject((current) => {
-        const updatedVendors = current.vendors.map((vendor) => {
-          if (vendor.id === vendorId) {
-            return {
-              ...vendor,
-              vettingChecklist: vendor.vettingChecklist.map((c) =>
-                c.id === checkId ? { ...c, checked: !c.checked } : c,
-              ),
-            };
-          }
-          return vendor;
-        });
-
-        return {
-          ...current,
-          vendors: updatedVendors,
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 10. Update vendor status
-  const updateVendorStatus = useCallback(
-    (vendorId: string, status: VendorChecklistItem['status'], actualCost?: number) => {
-      updateActiveProject((current) => {
-        let vendorName = '';
-
-        const updatedVendors = current.vendors.map((vendor) => {
-          if (vendor.id === vendorId) {
-            vendorName = vendor.vendorName;
-            return {
-              ...vendor,
-              status,
-              actualCost: actualCost !== undefined ? Math.max(0, actualCost) : vendor.actualCost,
-            };
-          }
-          return vendor;
-        });
-
-        const newLogs = [...current.decisionLogs];
-        if (status === 'booked' || status === 'paid') {
-          newLogs.unshift({
-            id: uid('cdl'),
-            timestamp: nowIso(),
-            trigger: `Vendor Milestones: ${vendorName}`,
-            reasoning: `Procurement stage updated to ${status.toUpperCase()} for ${vendorName}.`,
-            actionTaken: `Vendor committed to event registry.`,
-            impactLevel: 'medium',
-          });
-        }
-
-        return {
-          ...current,
-          vendors: updatedVendors,
-          decisionLogs: newLogs,
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 11. Add vendor
-  const addVendor = useCallback(
-    (vendor: Omit<VendorChecklistItem, 'id'>) => {
-      const newVendor: VendorChecklistItem = {
-        ...vendor,
-        id: uid('vendor'),
-        category: sanitizeUserInput(vendor.category, 50),
-        vendorName: sanitizeUserInput(vendor.vendorName, 80),
-        contactEmail: sanitizeUserInput(vendor.contactEmail, 80),
-        notes: sanitizeUserInput(vendor.notes, 200),
-        estimatedCost: Math.max(0, vendor.estimatedCost),
-        actualCost: Math.max(0, vendor.actualCost),
-      };
-
-      updateActiveProject((current) => ({
-        ...current,
-        vendors: [...current.vendors, newVendor],
-      }));
-    },
-    [updateActiveProject],
-  );
-
-  // 12. Apply personalized idea to plan
-  const applyIdeaToPlan = useCallback(
-    (ideaId: string) => {
-      updateActiveProject((current) => {
-        const targetIdea = current.savedIdeas.find((i) => i.id === ideaId);
-        if (!targetIdea || targetIdea.appliedToPlan) return current;
-
-        // Mark idea as applied
-        const updatedIdeas = current.savedIdeas.map((i) =>
-          i.id === ideaId ? { ...i, appliedToPlan: true } : i,
-        );
-
-        // Inject actionable milestone in timeline
-        const injectedMilestone: TimelineItem = {
-          id: uid('tl'),
-          title: `Activate: ${targetIdea.title}`,
-          phase: 'countdown',
-          timeframe: '2 weeks before event',
-          category: targetIdea.category.toUpperCase(),
-          status: 'in-progress',
-          isCriticalPath: false,
-          assignee: 'Experience Coordinator',
-          dependencyNote: targetIdea.description,
-        };
-
-        const decisionLog: ContextDecisionLog = {
-          id: uid('cdl'),
-          timestamp: nowIso(),
-          trigger: `Idea Applied: "${targetIdea.title}"`,
-          reasoning: `Contextual recommendation in ${targetIdea.category} adopted. ${targetIdea.bestForContext}`,
-          actionTaken: `Injected milestone into countdown roadmap with estimated impact ${targetIdea.estimatedCostImpact}.`,
-          impactLevel: 'medium',
-        };
-
-        return {
-          ...current,
-          savedIdeas: updatedIdeas,
-          timelineItems: [injectedMilestone, ...current.timelineItems],
-          decisionLogs: [decisionLog, ...current.decisionLogs],
-        };
-      });
-    },
-    [updateActiveProject],
-  );
-
-  // 12b. Add newly synthesized personalized ideas
+  // 4. Add newly synthesized personalized ideas
   const addGeneratedIdeas = useCallback(
     (newIdeas: PersonalizedIdea[]) => {
       updateActiveProject((current) => {
@@ -642,15 +351,14 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     [updateActiveProject],
   );
 
-  // 13. Trigger contingency scenario
+  // 5. Trigger contingency scenario
   const triggerContingencyScenario = useCallback(
     (scenario: 'weather' | 'budget-cut' | 'guest-surge' | 'vendor-drop') => {
       const contingency = generateContingencyPlan(activeProject, scenario);
 
       updateActiveProject((current) => {
-        let updatedProject = { ...current };
+        const updatedProject = { ...current };
 
-        // Real-time mutations based on scenario type
         if (scenario === 'weather') {
           updatedProject.indoorOutdoor = 'indoor';
         } else if (scenario === 'budget-cut') {
@@ -664,7 +372,6 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
           updatedProject.guestCount = surgeGuests;
           updatedProject.budgetCategories = rebalance.updatedCategories;
         } else if (scenario === 'vendor-drop') {
-          // Flag the first booked or negotiating vendor as at-risk/shortlisted
           updatedProject.vendors = current.vendors.map((v, idx) =>
             idx === 0
               ? {
@@ -676,7 +383,6 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
           );
         }
 
-        // Add actionable timeline mitigation task
         const mitigationTask: TimelineItem = {
           id: uid('tl-contingency'),
           title: `Contingency Execution: ${scenario.toUpperCase()}`,
@@ -705,7 +411,7 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     [activeProject, updateActiveProject],
   );
 
-  // 14. Reset demo data cleanly
+  // 6. Reset demo data cleanly
   const resetDemoData = useCallback(() => {
     try {
       localStorage.removeItem(STORAGE_KEY_PROJECTS);
@@ -725,15 +431,15 @@ export function useEventWorkspace(): UseEventWorkspaceReturn {
     selectVerticalProject,
     createNewProject,
     updateProjectContext,
-    toggleCategoryLock,
-    updateCategorySpend,
-    addBudgetCategory,
-    updateTimelineStatus,
-    addTimelineItem,
-    toggleVendorChecklistItem,
-    updateVendorStatus,
-    addVendor,
-    applyIdeaToPlan,
+    toggleCategoryLock: budgetDomain.toggleCategoryLock,
+    updateCategorySpend: budgetDomain.updateCategorySpend,
+    addBudgetCategory: budgetDomain.addBudgetCategory,
+    updateTimelineStatus: timelineDomain.updateTimelineStatus,
+    addTimelineItem: timelineDomain.addTimelineItem,
+    toggleVendorChecklistItem: vendorDomain.toggleVendorChecklistItem,
+    updateVendorStatus: vendorDomain.updateVendorStatus,
+    addVendor: vendorDomain.addVendor,
+    applyIdeaToPlan: timelineDomain.applyIdeaToPlan,
     addGeneratedIdeas,
     triggerContingencyScenario,
     resetDemoData,
