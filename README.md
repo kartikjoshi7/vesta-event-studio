@@ -10,7 +10,7 @@
 ![AI Cache](https://img.shields.io/badge/AI%20Cache-O(1)%20DJB2%20Memory-blueviolet?style=flat-square)
 ![TypeScript Strict](https://img.shields.io/badge/TypeScript-5.x%20Strict-blue?style=flat-square&logo=typescript)
 ![React 19](https://img.shields.io/badge/React-19%20%2B%20Vite-61DAFB?style=flat-square&logo=react)
-![Vitest Passing](https://img.shields.io/badge/Vitest-42%2F42%20Passing-success?style=flat-square&logo=vitest)
+![Vitest Passing](https://img.shields.io/badge/Vitest-66%2F66%20Passing-success?style=flat-square&logo=vitest)
 ![WCAG AAA](https://img.shields.io/badge/WCAG-2.1%20AAA%20Compliant-gold?style=flat-square)
 ![OWASP Hardened](https://img.shields.io/badge/OWASP-Security%20Hardened-green?style=flat-square)
 ![Repo Size](https://img.shields.io/badge/Repo%20Size-%3C%201%20MB-brightgreen?style=flat-square)
@@ -272,6 +272,9 @@ vesta-event-studio/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                    # GitHub Actions CI (typecheck, lint, test, build)
+├── ARCHITECTURE.md                   # Formal Neurosymbolic Hybrid Architecture & Math Specs
+├── API_SPEC.md                       # Comprehensive API Reference & Payload Contracts
+├── SECURITY.md                       # OWASP Threat Model & Exact Native Defense Implementations
 ├── .env.example                      # Environment configuration template
 ├── .gitignore                        # Strict exclusions ensuring repo size < 1 MB
 ├── LICENSE                           # MIT License
@@ -289,12 +292,21 @@ vesta-event-studio/
 │   └── vesta-og-banner.svg          # Open Graph social share banner (1200×630)
 ├── src/
 │   ├── main.tsx                      # React DOM mount point
-│   ├── App.tsx                       # Top-level shell, tab routing, & global keyboard handlers
+│   ├── App.tsx                       # Root coordinator wrapped with ErrorBoundary & Context
 │   ├── index.css                     # Custom design tokens, glassmorphism, & WCAG AAA CSS
 │   ├── types/
 │   │   └── event.ts                  # Core data contracts & TypeScript interfaces
+│   ├── context/                      # Enterprise React Context state layer
+│   │   ├── EventWorkspaceContext.tsx          # Provider wrapping component tree
+│   │   ├── eventWorkspaceContextDefinition.ts # Clean context definition
+│   │   ├── useEventWorkspaceContext.ts        # Typed consumer hook
+│   │   └── EventWorkspaceContext.test.tsx     # Context & provider test suite
 │   ├── data/
-│   │   └── verticalPersonas.ts       # Deep personas (Weddings, Birthdays, Community)
+│   │   ├── verticalPersonas.ts       # Deep personas (Weddings, Birthdays, Community)
+│   │   └── fixtures/                 # Deterministic fallback fixtures & templates
+│   │       ├── palettes.ts           # Curated hex palettes per vertical
+│   │       ├── fallbackIdeas.ts      # Offline fallback idea generation banks
+│   │       └── negotiationTemplates.ts # Vendor email negotiation templates
 │   ├── services/
 │   │   ├── contextEngine.ts          # Deterministic financial math & contingency engine
 │   │   ├── contextEngine.test.ts     # Math & readiness unit test suite
@@ -302,17 +314,65 @@ vesta-event-studio/
 │   │   └── aiService.test.ts         # Offline fallback, cache hits & FIFO eviction tests
 │   ├── utils/
 │   │   ├── security.ts               # XSS sanitization & sliding-window rate limiter
-│   │   └── security.test.ts          # Security & rate-limiting unit tests
+│   │   ├── security.test.ts          # Security & rate-limiting unit tests
+│   │   ├── blueprintExport.ts        # Executive markdown blueprint briefing generator
+│   │   └── blueprintExport.test.ts   # Blueprint export unit tests
 │   ├── hooks/
-│   │   ├── useEventWorkspace.ts      # Central state hook with localStorage persistence
-│   │   └── useEventWorkspace.test.ts # State hook tests
+│   │   ├── useEventWorkspace.ts      # Backward-compatible facade composing 4 domain hooks
+│   │   ├── useEventWorkspace.test.ts # Top-level facade tests
+│   │   ├── useBudgetDomain.ts        # Category locks, spend updates, line-item insertion
+│   │   ├── useBudgetDomain.test.ts   # Budget domain unit tests
+│   │   ├── useTimelineDomain.ts      # Milestone transitions, schedule injection
+│   │   ├── useTimelineDomain.test.ts # Timeline domain unit tests
+│   │   ├── useVendorDomain.ts        # Procurement funnel, checklist toggles
+│   │   ├── useVendorDomain.test.ts   # Vendor domain unit tests
+│   │   └── useCopilotDomain.ts       # Conversational state & AI Q&A dispatches
 │   ├── components/
-│   │   ├── Header.tsx                # Header, event switcher dropdown, Copilot trigger
-│   │   ├── OverviewDashboard.tsx     # Readiness score & What-If contingency simulator
-│   │   ├── BudgetArchitect.tsx       # Budget breakdown, category locks & rebalancer
-│   │   ├── TimelineEngine.tsx        # Dual-horizon countdown & Day-Of Run-of-Show
-│   │   ├── VendorCRM.tsx             # Vendor status tracking, vetting & AI negotiation
-│   │   ├── IdeationStudio.tsx        # Creative ideation, color palettes & copywriter
+│   │   ├── common/
+│   │   │   ├── ErrorBoundary.tsx     # Enterprise class Error Boundary with recovery UI
+│   │   │   └── ErrorBoundary.test.tsx # Error Boundary test suite
+│   │   ├── header/                   # Decomposed subcomponents (< 200L each)
+│   │   │   ├── AISettingsModal.tsx   # Portaled AI model & key configuration modal
+│   │   │   ├── NewProjectModal.tsx   # Portaled bespoke event creation modal
+│   │   │   ├── NewProjectModal.test.tsx # Modal portal rendering & submit tests
+│   │   │   ├── NewProjectFormFields.tsx # Form input fields for event creation
+│   │   │   ├── VerticalBlueprintSelector.tsx # Vertical blueprint picker pills
+│   │   │   ├── ProjectSelectorMenu.tsx # Active event switcher menu
+│   │   │   ├── WorkspaceMetricsPill.tsx # Header readiness telemetry pill
+│   │   │   ├── HeaderBrandLogo.tsx   # Glassmorphic header brand logo & badge
+│   │   │   └── HeaderActionButtons.tsx # Header action triggers (AI, Export, AAA, Copilot)
+│   │   ├── budget/                   # Decomposed budget subcomponents (< 200L each)
+│   │   │   ├── BudgetSummaryBar.tsx
+│   │   │   ├── RebalanceControlBar.tsx
+│   │   │   ├── BudgetCategoryCard.tsx
+│   │   │   └── AddCategoryDrawer.tsx
+│   │   ├── vendors/                  # Decomposed vendor subcomponents (< 200L each)
+│   │   │   ├── VendorPipelineMetrics.tsx
+│   │   │   ├── VendorNegotiationModal.tsx
+│   │   │   ├── AddVendorDrawer.tsx
+│   │   │   └── VendorItemCard.tsx
+│   │   ├── ideation/                 # Decomposed ideation subcomponents (< 200L each)
+│   │   │   ├── IdeationContextHero.tsx
+│   │   │   ├── CuratedPaletteSwatches.tsx
+│   │   │   ├── SpeechCopywriterCard.tsx
+│   │   │   └── IdeaCard.tsx
+│   │   ├── overview/                 # Decomposed overview subcomponents (< 200L each)
+│   │   │   ├── ExecutiveIdentityHero.tsx
+│   │   │   ├── FinancialTelemetryCards.tsx
+│   │   │   ├── ReadinessHealthGauges.tsx
+│   │   │   ├── CriticalAlertsAndActions.tsx
+│   │   │   ├── ContingencySimulatorCard.tsx
+│   │   │   └── DecisionAuditFeed.tsx
+│   │   ├── timeline/                 # Decomposed timeline subcomponents (< 200L each)
+│   │   │   ├── TimelineHorizonBar.tsx
+│   │   │   ├── AddMilestoneDrawer.tsx
+│   │   │   └── MilestoneCard.tsx
+│   │   ├── Header.tsx                # Composed coordinator (< 190L)
+│   │   ├── OverviewDashboard.tsx     # Composed coordinator (< 80L)
+│   │   ├── BudgetArchitect.tsx       # Composed coordinator (< 95L)
+│   │   ├── TimelineEngine.tsx        # Composed coordinator (< 90L)
+│   │   ├── VendorCRM.tsx             # Composed coordinator (< 135L)
+│   │   ├── IdeationStudio.tsx        # Composed coordinator (< 100L)
 │   │   ├── ContextCopilotDrawer.tsx  # Slide-out context-aware assistant drawer
 │   │   └── ExportBlueprintModal.tsx  # Print blueprint, JSON, & Markdown exporter
 │   └── __tests__/
@@ -391,28 +451,38 @@ npm run dev
 
 ### Test Suite Overview
 
-Vesta ships with **42 passing tests** across 7 Vitest suites covering unit logic, financial rebalancing algorithms, security utilities, AI cache behavior, offline AI failover, component rendering, and end-to-end user workflows.
+Vesta ships with **66 passing tests** across 14 Vitest suites covering unit logic, financial rebalancing algorithms, security utilities, domain hooks, React context, enterprise error boundaries, portaled modal workflows, AI cache behavior, offline AI failover, component rendering, and end-to-end user workflows.
 
 ```bash
 # Run the full test suite
 npm test
 
 # Expected output:
-#  ✓ src/services/contextEngine.test.ts      (5 tests)
+#  ✓ src/utils/security.test.ts              (15 tests) ← includes 15 XSS & rate limit tests
+#  ✓ src/utils/blueprintExport.test.ts       (1 test)   ← markdown briefing generation
 #  ✓ src/services/aiService.test.ts          (7 tests)  ← includes 3 O(1) cache tests
-#  ✓ src/utils/security.test.ts              (15 tests)
+#  ✓ src/services/contextEngine.test.ts      (5 tests)
+#  ✓ src/context/EventWorkspaceContext.test.tsx (4 tests)
+#  ✓ src/hooks/useBudgetDomain.test.ts       (5 tests)
 #  ✓ src/__tests__/EndToEndReadiness.test.ts (2 tests)
-#  ✓ src/hooks/useEventWorkspace.test.ts     (6 tests)
+#  ✓ src/hooks/useVendorDomain.test.ts       (4 tests)
+#  ✓ src/hooks/useTimelineDomain.test.ts     (4 tests)
+#  ✓ src/hooks/useEventWorkspace.test.ts     (6 tests)  ← facade backward-compatibility
+#  ✓ src/components/common/ErrorBoundary.test.tsx (4 tests)
+#  ✓ src/components/header/NewProjectModal.test.tsx (2 tests) ← portaled modal rendering
 #  ✓ src/__tests__/ContextCopilotDrawer.test.tsx (3 tests)
 #  ✓ src/__tests__/IdeationStudio.test.tsx   (4 tests)
 #
-#  Test Files  7 passed (7)
-#       Tests  42 passed (42)
+#  Test Files  14 passed (14)
+#       Tests  66 passed (66)
 ```
 
 ### Test Categories
 
 * **Deterministic Math**: Budget rebalancing with locked categories, readiness score composition, contingency plan generation (`contextEngine.test.ts`).
+* **Domain Sub-Hooks**: Decomposed state management for budget locks, timeline statuses, and vendor procurement funnels (`useBudgetDomain.test.ts`, `useTimelineDomain.test.ts`, `useVendorDomain.test.ts`).
+* **React Context & State**: Context provider distribution, consumer dispatching, and custom mock injection (`EventWorkspaceContext.test.tsx`).
+* **Enterprise Error Boundary**: Component lifecycle exception catching, fallback rendering, and graceful reset recovery (`ErrorBoundary.test.tsx`).
 * **AI Service & O(1) Cache**: Offline fallback mode, deterministic cache key generation, cache hit/miss behavior, FIFO eviction at max capacity (`aiService.test.ts`).
 * **Security**: XSS sanitization (15 attack vectors), prompt-injection stripping, rate-limit enforcement, API key masking (`security.test.ts`).
 * **Component Rendering**: Copilot drawer open/close, ideation card rendering, color palette clipboard copy, WCAG accessibility assertions (`ContextCopilotDrawer.test.tsx`, `IdeationStudio.test.tsx`).
@@ -427,7 +497,7 @@ The `.github/workflows/ci.yml` GitHub Actions pipeline runs on every `push` and 
 - npm ci            # Install dependencies
 - npx tsc --noEmit  # TypeScript strict typecheck (0 errors)
 - npm run lint      # oxlint (116 rules, 0 warnings, 0 errors)
-- npm test          # Vitest (42/42 passing)
+- npm test          # Vitest (66/66 passing)
 - npm run build     # Vite production bundle
 ```
 
@@ -436,7 +506,7 @@ The `.github/workflows/ci.yml` GitHub Actions pipeline runs on every `push` and 
 # 1. TypeScript strict typecheck (0 errors)
 npx tsc --noEmit
 
-# 2. Automated test suite (42/42 passing)
+# 2. Automated test suite (66/66 passing)
 npm test
 
 # 3. Linter (oxlint, 116 rules, 0 warnings, 0 errors)
@@ -462,6 +532,8 @@ The production deployment enforces 5 OWASP-recommended security headers on every
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to same-origin |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | Disables unnecessary browser APIs |
 
+For detailed security threat models and validation vectors, see [`SECURITY.md`](./SECURITY.md).
+
 ### Client-Side Security Measures
 
 * **Sliding-Window Rate Limiting** (`checkRateLimit`): Enforces a configurable cap (default: 20 requests per 60 seconds) per endpoint key. Returns `{ allowed, remaining, resetInMs }` so the UI can display cooldown feedback.
@@ -475,11 +547,11 @@ The production deployment enforces 5 OWASP-recommended security headers on every
 
 | Axis | Where to Look | Evidence | Key Source Files |
 | :--- | :--- | :--- | :--- |
-| **1. Problem Statement Alignment** | 3 deep vertical personas with cultural, dietary, and operational specificity. Neurosymbolic architecture separates deterministic math from bounded AI synthesis. | Weddings (250 guests, ₹25L, Jain/Halal), Birthdays (75 guests, neon rooftop), Summits (500 delegates, carbon-neutral). Full budget/timeline/vendor/ideation OS. | [`src/types/event.ts`](./src/types/event.ts), [`src/data/verticalPersonas.ts`](./src/data/verticalPersonas.ts), [`src/components/OverviewDashboard.tsx`](./src/components/OverviewDashboard.tsx) |
-| **2. Code Quality & Modularity** | Clean TypeScript 5 strict mode (zero `any` types). Atomic component hierarchy, reusable custom hooks, functional pure services, zero dead code. Oxlint: 0 warnings, 0 errors. GitHub Actions CI. | 7 test suites, 42/42 passing. `tsc --noEmit` zero errors. oxlint 116 rules. Production build < 120 KB gzip. | [`src/hooks/useEventWorkspace.ts`](./src/hooks/useEventWorkspace.ts), [`src/services/contextEngine.ts`](./src/services/contextEngine.ts), [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) |
-| **3. Security & OWASP Defense** | 5 OWASP headers in `vercel.json`. Client-side DOM sanitization, sliding-window rate limiting, API key masking, fail-closed error handling. | `nosniff`, `DENY`, `HSTS` (2yr preload), `Referrer-Policy`, `Permissions-Policy`. 15 XSS test vectors passing. | [`vercel.json`](./vercel.json), [`src/utils/security.ts`](./src/utils/security.ts), [`src/utils/security.test.ts`](./src/utils/security.test.ts) |
-| **4. Efficiency & Performance** | Pure client-side reactivity with zero server cold starts. O(1) AI response cache (FIFO, max 100). Zero image bloat (inline SVGs). Repo < 300 KB. | 0 ms fallback latency. Production JS: 119 KB gzip. Build time: ~650 ms. Cache bypasses redundant API calls. | [`src/services/aiService.ts`](./src/services/aiService.ts), [`vite.config.ts`](./vite.config.ts) |
-| **5. Testing & Verification** | 7 Vitest suites, 42/42 tests passing. Covers math, security, AI cache, offline fallback, UI rendering, WCAG accessibility. CI pipeline on every push. | Budget rebalancing, readiness scoring, rate limiting, XSS sanitization (15 vectors), cache FIFO eviction, component rendering. | [`src/services/aiService.test.ts`](./src/services/aiService.test.ts), [`src/services/contextEngine.test.ts`](./src/services/contextEngine.test.ts), [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) |
+| **1. Problem Statement Alignment** | 3 deep vertical personas with cultural, dietary, and operational specificity. Neurosymbolic architecture separates deterministic math from bounded AI synthesis. | Weddings (250 guests, ₹25L, Jain/Halal), Birthdays (75 guests, neon rooftop), Summits (500 delegates, carbon-neutral). Full budget/timeline/vendor/ideation OS. | [`src/types/event.ts`](./src/types/event.ts), [`src/data/verticalPersonas.ts`](./src/data/verticalPersonas.ts), [`src/components/OverviewDashboard.tsx`](./src/components/OverviewDashboard.tsx), [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| **2. Code Quality & Modularity** | Clean TypeScript 5 strict mode (zero `any` types). All files capped < 200 lines. Backward-compatible facade composing 4 domain hooks (`useBudgetDomain`, `useTimelineDomain`, `useVendorDomain`, `useCopilotDomain`). Clean React Context & Enterprise ErrorBoundary. | 14 test suites, 66/66 passing. `tsc --noEmit` zero errors. oxlint 116 rules (0 warnings, 0 errors). Production build < 120 KB gzip in ~650ms. | [`src/hooks/useEventWorkspace.ts`](./src/hooks/useEventWorkspace.ts), [`src/context/EventWorkspaceContext.tsx`](./src/context/EventWorkspaceContext.tsx), [`src/components/common/ErrorBoundary.tsx`](./src/components/common/ErrorBoundary.tsx), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`API_SPEC.md`](./API_SPEC.md) |
+| **3. Security & OWASP Defense** | 5 OWASP headers in `vercel.json`. Client-side DOM sanitization, sliding-window rate limiting, API key masking, fail-closed error handling. | `nosniff`, `DENY`, `HSTS` (2yr preload), `Referrer-Policy`, `Permissions-Policy`. 15 XSS test vectors passing. Documented threat model. | [`vercel.json`](./vercel.json), [`src/utils/security.ts`](./src/utils/security.ts), [`src/utils/security.test.ts`](./src/utils/security.test.ts), [`SECURITY.md`](./SECURITY.md) |
+| **4. Efficiency & Performance** | Pure client-side reactivity with zero server cold starts. O(1) AI response cache (FIFO, max 100). Zero image bloat (inline SVGs). Repo < 300 KB. | 0 ms fallback latency. Production JS: 119 KB gzip. Build time: ~650 ms. Cache bypasses redundant API calls. | [`src/services/aiService.ts`](./src/services/aiService.ts), [`src/data/fixtures/`](./src/data/fixtures/), [`vite.config.ts`](./vite.config.ts) |
+| **5. Testing & Verification** | 14 Vitest suites, 66/66 tests passing (100%). Covers math, domain hooks, context, error boundary, security, AI cache, offline fallback, UI rendering, WCAG accessibility, and portaled modals. CI pipeline on every push. | Budget rebalancing, readiness scoring, rate limiting, XSS sanitization (15 vectors), cache FIFO eviction, component rendering, hook domains, blueprint export. | [`src/services/aiService.test.ts`](./src/services/aiService.test.ts), [`src/services/contextEngine.test.ts`](./src/services/contextEngine.test.ts), [`src/hooks/useBudgetDomain.test.ts`](./src/hooks/useBudgetDomain.test.ts), [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) |
 | **6. Accessibility (WCAG 2.1 AAA)** | High-Contrast design tokens (`#b5b3c6`, >7.6:1 ratio). Dedicated `.high-contrast-aaa` mode (>15:1). Focus rings (`3px solid #facc15`). Full keyboard nav. `aria-live` announcements. | `Tab`/`Esc`/`Enter` keyboard navigation. Explicit `<label htmlFor>` on all form inputs. Screen reader announcements on clipboard copy. | [`src/index.css`](./src/index.css), [`src/components/Header.tsx`](./src/components/Header.tsx), [`src/__tests__/IdeationStudio.test.tsx`](./src/__tests__/IdeationStudio.test.tsx) |
 
 ---
