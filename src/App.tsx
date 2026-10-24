@@ -20,6 +20,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useEventWorkspace } from './hooks/useEventWorkspace';
+import { EventWorkspaceProvider } from './context/EventWorkspaceContext';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { Header } from './components/Header';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import './index.css';
@@ -47,6 +49,7 @@ const ExportBlueprintModal = lazy(() =>
 type ActiveTab = 'overview' | 'budget' | 'timeline' | 'vendors' | 'ideation';
 
 export function App() {
+  const workspace = useEventWorkspace();
   const {
     projects,
     activeProject,
@@ -66,7 +69,7 @@ export function App() {
     addGeneratedIdeas,
     triggerContingencyScenario,
     resetDemoData,
-  } = useEventWorkspace();
+  } = workspace;
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
@@ -150,215 +153,225 @@ export function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-vesta-midnight text-vesta-text flex flex-col font-sans selection:bg-vesta-iris selection:text-white relative">
-      {/* ─── WCAG 2.1 AA Skip to Content Link ────────────────────────────── */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-vesta-gold text-vesta-midnight font-bold rounded-xl shadow-2xl focus:outline-none focus:ring-2 focus:ring-white"
-      >
-        Skip to main content
-      </a>
-
-      {/* ─── Global Command Header ──────────────────────────────────────── */}
-      <Header
-        activeProject={activeProject}
-        projects={projects}
-        readinessMetrics={readinessMetrics}
-        onSelectVertical={selectVerticalProject}
-        onCreateProject={createNewProject}
-        onResetDemoData={resetDemoData}
-        onOpenExportModal={() => setIsExportModalOpen(true)}
-        onOpenCopilot={() => setIsCopilotOpen(true)}
-      />
-
-      {/* ─── Streamlined Primary Navigation Bar ─────────────────────────── */}
-      <nav
-        role="navigation"
-        aria-label="Planning Modules Navigation"
-        className="w-full border-b border-vesta-border/60 bg-vesta-midnight/80 backdrop-blur-xl sticky top-16 z-30 transition-all shadow-sm"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 py-2">
-            {/* Module Tabs Segmented Control */}
-            <div
-              role="tablist"
-              aria-label="Event Planning Modules"
-              className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar"
-            >
-              {navTabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-
-                return (
-                  <button
-                    key={tab.id}
-                    id={`tab-${tab.id}`}
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={`panel-${tab.id}`}
-                    tabIndex={isActive ? 0 : -1}
-                    onClick={() => setActiveTab(tab.id)}
-                    type="button"
-                    className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
-                      isActive
-                        ? 'bg-vesta-surface text-vesta-gold border border-vesta-gold/30 shadow-sm'
-                        : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface/50 border border-transparent'
-                    }`}
-                  >
-                    <span
-                      className={
-                        isActive ? 'text-vesta-gold' : 'text-vesta-muted group-hover:text-vesta-text'
-                      }
-                    >
-                      {tab.icon}
-                    </span>
-                    <span>{tab.label}</span>
-                    <span
-                      className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md ${
-                        isActive
-                          ? 'bg-vesta-gold/20 text-vesta-gold'
-                          : 'bg-vesta-card/80 text-vesta-muted'
-                      }`}
-                    >
-                      {tab.badge}
-                    </span>
-                    <span className="hidden xl:inline-block text-[9px] font-mono text-vesta-muted opacity-80 group-hover:opacity-100 ml-0.5">
-                      [{tab.shortcut}]
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Right Context Summary Breadcrumb */}
-            <div className="hidden xl:flex items-center gap-2 text-xs text-vesta-muted shrink-0 font-medium">
-              <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 text-vesta-text">
-                📍 {activeProject.location.split(',')[0]}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 text-vesta-iris">
-                👥 {activeProject.guestCount}
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 font-mono text-vesta-gold">
-                💰 {activeProject.currency} {(activeProject.totalBudget / 100000).toFixed(1)}L
-              </span>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* ─── Main Content Canvas ────────────────────────────────────────── */}
-      <main
-        id="main-content"
-        role="main"
-        tabIndex={-1}
-        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none"
-      >
-        <div
-          role="tabpanel"
-          id={`panel-${activeTab}`}
-          aria-labelledby={`tab-${activeTab}`}
-          className="focus:outline-none"
-        >
-          {activeTab === 'overview' && (
-            <OverviewDashboard
-              project={activeProject}
-              readinessMetrics={readinessMetrics}
-              onUpdateContext={updateProjectContext}
-              onTriggerContingency={triggerContingencyScenario}
-            />
-          )}
-
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center py-24 text-vesta-muted text-sm font-medium animate-pulse">
-                ✦ Loading module...
-              </div>
-            }
+    <ErrorBoundary>
+      <EventWorkspaceProvider value={workspace}>
+        <div className="min-h-screen bg-vesta-midnight text-vesta-text flex flex-col font-sans selection:bg-vesta-iris selection:text-white relative">
+          {/* ─── WCAG 2.1 AA Skip to Content Link ────────────────────────────── */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 px-4 py-2 bg-vesta-gold text-vesta-midnight font-bold rounded-xl shadow-2xl focus:outline-none focus:ring-2 focus:ring-white"
           >
-            {activeTab === 'budget' && (
-              <BudgetArchitect
-                project={activeProject}
-                onToggleLock={toggleCategoryLock}
-                onUpdateCategorySpend={updateCategorySpend}
-                onAddCategory={addBudgetCategory}
-                onUpdateContext={updateProjectContext}
-              />
+            Skip to main content
+          </a>
+
+          {/* ─── Global Command Header ──────────────────────────────────────── */}
+          <Header
+            activeProject={activeProject}
+            projects={projects}
+            readinessMetrics={readinessMetrics}
+            onSelectVertical={selectVerticalProject}
+            onCreateProject={createNewProject}
+            onResetDemoData={resetDemoData}
+            onOpenExportModal={() => setIsExportModalOpen(true)}
+            onOpenCopilot={() => setIsCopilotOpen(true)}
+          />
+
+          {/* ─── Streamlined Primary Navigation Bar ─────────────────────────── */}
+          <nav
+            role="navigation"
+            aria-label="Planning Modules Navigation"
+            className="w-full border-b border-vesta-border/60 bg-vesta-midnight/80 backdrop-blur-xl sticky top-16 z-30 transition-all shadow-sm"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between gap-4 py-2">
+                {/* Module Tabs Segmented Control */}
+                <div
+                  role="tablist"
+                  aria-label="Event Planning Modules"
+                  className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar"
+                >
+                  {navTabs.map((tab) => {
+                    const isActive = activeTab === tab.id;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        id={`tab-${tab.id}`}
+                        role="tab"
+                        aria-selected={isActive}
+                        aria-controls={`panel-${tab.id}`}
+                        tabIndex={isActive ? 0 : -1}
+                        onClick={() => setActiveTab(tab.id)}
+                        type="button"
+                        className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-vesta-iris ${
+                          isActive
+                            ? 'bg-vesta-surface text-vesta-gold border border-vesta-gold/30 shadow-sm'
+                            : 'text-vesta-muted hover:text-vesta-text hover:bg-vesta-surface/50 border border-transparent'
+                        }`}
+                      >
+                        <span
+                          className={
+                            isActive ? 'text-vesta-gold' : 'text-vesta-muted group-hover:text-vesta-text'
+                          }
+                        >
+                          {tab.icon}
+                        </span>
+                        <span>{tab.label}</span>
+                        <span
+                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded-md ${
+                            isActive
+                              ? 'bg-vesta-gold/20 text-vesta-gold'
+                              : 'bg-vesta-card/80 text-vesta-muted'
+                          }`}
+                        >
+                          {tab.badge}
+                        </span>
+                        <span className="hidden xl:inline-block text-[9px] font-mono text-vesta-muted opacity-80 group-hover:opacity-100 ml-0.5">
+                          [{tab.shortcut}]
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right Context Summary Breadcrumb */}
+                <div className="hidden xl:flex items-center gap-2 text-xs text-vesta-muted shrink-0 font-medium">
+                  <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 text-vesta-text">
+                    📍 {activeProject.location.split(',')[0]}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 text-vesta-iris">
+                    👥 {activeProject.guestCount}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md bg-vesta-surface/80 border border-vesta-border/60 font-mono text-vesta-gold">
+                    💰 {activeProject.currency} {(activeProject.totalBudget / 100000).toFixed(1)}L
+                  </span>
+                </div>
+              </div>
+            </div>
+          </nav>
+
+          {/* ─── Main Content Canvas ────────────────────────────────────────── */}
+          <main
+            id="main-content"
+            role="main"
+            tabIndex={-1}
+            className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 focus:outline-none"
+          >
+            <div
+              role="tabpanel"
+              id={`panel-${activeTab}`}
+              aria-labelledby={`tab-${activeTab}`}
+              className="focus:outline-none"
+            >
+              <ErrorBoundary key={activeTab}>
+                {activeTab === 'overview' && (
+                  <OverviewDashboard
+                    project={activeProject}
+                    readinessMetrics={readinessMetrics}
+                    onUpdateContext={updateProjectContext}
+                    onTriggerContingency={triggerContingencyScenario}
+                  />
+                )}
+
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center py-24 text-vesta-muted text-sm font-medium animate-pulse">
+                      ✦ Loading module...
+                    </div>
+                  }
+                >
+                  {activeTab === 'budget' && (
+                    <BudgetArchitect
+                      project={activeProject}
+                      onToggleLock={toggleCategoryLock}
+                      onUpdateCategorySpend={updateCategorySpend}
+                      onAddCategory={addBudgetCategory}
+                      onUpdateContext={updateProjectContext}
+                    />
+                  )}
+
+                  {activeTab === 'timeline' && (
+                    <TimelineEngine
+                      project={activeProject}
+                      onUpdateStatus={updateTimelineStatus}
+                      onAddTimelineItem={addTimelineItem}
+                    />
+                  )}
+
+                  {activeTab === 'vendors' && (
+                    <VendorCRM
+                      project={activeProject}
+                      onToggleChecklistItem={toggleVendorChecklistItem}
+                      onUpdateVendorStatus={updateVendorStatus}
+                      onAddVendor={addVendor}
+                    />
+                  )}
+
+                  {activeTab === 'ideation' && (
+                    <IdeationStudio
+                      project={activeProject}
+                      onApplyIdea={applyIdeaToPlan}
+                      onAddGeneratedIdeas={addGeneratedIdeas}
+                    />
+                  )}
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          </main>
+
+          {/* ─── Context AI Copilot Drawer & Export Blueprint Modal (Lazy) ── */}
+          <Suspense fallback={null}>
+            {isCopilotOpen && (
+              <ErrorBoundary>
+                <ContextCopilotDrawer
+                  isOpen={isCopilotOpen}
+                  onClose={() => setIsCopilotOpen(false)}
+                  project={activeProject}
+                  readinessMetrics={readinessMetrics}
+                  onTriggerContingency={triggerContingencyScenario}
+                  onUpdateContext={updateProjectContext}
+                />
+              </ErrorBoundary>
             )}
 
-            {activeTab === 'timeline' && (
-              <TimelineEngine
-                project={activeProject}
-                onUpdateStatus={updateTimelineStatus}
-                onAddTimelineItem={addTimelineItem}
-              />
-            )}
-
-            {activeTab === 'vendors' && (
-              <VendorCRM
-                project={activeProject}
-                onToggleChecklistItem={toggleVendorChecklistItem}
-                onUpdateVendorStatus={updateVendorStatus}
-                onAddVendor={addVendor}
-              />
-            )}
-
-            {activeTab === 'ideation' && (
-              <IdeationStudio
-                project={activeProject}
-                onApplyIdea={applyIdeaToPlan}
-                onAddGeneratedIdeas={addGeneratedIdeas}
-              />
+            {isExportModalOpen && (
+              <ErrorBoundary>
+                <ExportBlueprintModal
+                  isOpen={isExportModalOpen}
+                  onClose={() => setIsExportModalOpen(false)}
+                  project={activeProject}
+                  readinessMetrics={readinessMetrics}
+                />
+              </ErrorBoundary>
             )}
           </Suspense>
+
+          {/* ─── Enterprise Status Footer ───────────────────────────────────── */}
+          <footer
+            role="contentinfo"
+            className="w-full border-t border-vesta-border bg-vesta-surface/30 backdrop-blur-md py-4 text-center text-xs text-vesta-muted mt-auto"
+          >
+            <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-vesta-success animate-pulse" />
+                <span>
+                  Active: <strong className="text-vesta-text">{activeProject.title}</strong> (
+                  {activeProject.guestCount} Guests · {activeProject.currency}{' '}
+                  {activeProject.totalBudget.toLocaleString()})
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-vesta-muted">
+                  <span className="w-1.5 h-1.5 rounded-full bg-vesta-gold" />
+                  Vesta Event Studio · Enterprise Celebration & Event Planning OS
+                </span>
+              </div>
+            </div>
+          </footer>
         </div>
-      </main>
-
-      {/* ─── Context AI Copilot Drawer & Export Blueprint Modal (Lazy) ── */}
-      <Suspense fallback={null}>
-        {isCopilotOpen && (
-          <ContextCopilotDrawer
-            isOpen={isCopilotOpen}
-            onClose={() => setIsCopilotOpen(false)}
-            project={activeProject}
-            readinessMetrics={readinessMetrics}
-            onTriggerContingency={triggerContingencyScenario}
-            onUpdateContext={updateProjectContext}
-          />
-        )}
-
-        {isExportModalOpen && (
-          <ExportBlueprintModal
-            isOpen={isExportModalOpen}
-            onClose={() => setIsExportModalOpen(false)}
-            project={activeProject}
-            readinessMetrics={readinessMetrics}
-          />
-        )}
-      </Suspense>
-
-      {/* ─── Enterprise Status Footer ───────────────────────────────────── */}
-      <footer
-        role="contentinfo"
-        className="w-full border-t border-vesta-border bg-vesta-surface/30 backdrop-blur-md py-4 text-center text-xs text-vesta-muted mt-auto"
-      >
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-vesta-success animate-pulse" />
-            <span>
-              Active: <strong className="text-vesta-text">{activeProject.title}</strong> (
-              {activeProject.guestCount} Guests · {activeProject.currency}{' '}
-              {activeProject.totalBudget.toLocaleString()})
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-[11px] font-medium text-vesta-muted">
-              <span className="w-1.5 h-1.5 rounded-full bg-vesta-gold" />
-              Vesta Event Studio · Enterprise Celebration & Event Planning OS
-            </span>
-          </div>
-        </div>
-      </footer>
-    </div>
+      </EventWorkspaceProvider>
+    </ErrorBoundary>
   );
 }
 
