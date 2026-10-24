@@ -2,8 +2,9 @@
  * @fileoverview Hybrid GenAI Assistant Engine for Vesta Event Studio.
  *
  * Supports two operational modes:
- * 1. **Gemini Live** — Calls Google Gemini (`gemini-2.5-flash`) via REST
- *    when an API key is available.
+ * 1. **Gemini Live** — Calls Google Gemini (`gemini-3.5-flash` with resilient
+ *    cascading to `gemini-3-flash-preview`, `gemini-2.5-flash`, and `gemini-2.0-flash`)
+ *    via REST when an API key is available.
  * 2. **Smart Context Engine** — A fully offline, deterministic fallback
  *    that synthesises context-aware responses from the project state,
  *    ensuring 100% uptime for evaluators without an API key.
@@ -28,6 +29,48 @@ const GEMINI_MODEL =
 
 /** Base URL for the Gemini REST API. */
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+// ─── O(1) In-Memory AI Response Cache ──────────────────────────────────────
+
+/** Maximum number of cached AI responses before FIFO eviction. */
+const AI_CACHE_MAX_SIZE = 100;
+
+/**
+ * In-memory cache for AI responses keyed by a deterministic hash of
+ * the request context + prompt.  Provides O(1) lookup time (0 ms latency)
+ * for repeated queries, bypassing redundant network calls and rate limits.
+ *
+ * Eviction policy: FIFO — when the cache exceeds `AI_CACHE_MAX_SIZE`,
+ * the oldest entry is deleted before inserting the new one.
+ */
+export const aiResponseCache = new Map<string, string>();
+
+/**
+ * Generates a deterministic cache key from an arbitrary set of string segments.
+ * Uses a fast DJB2-style hash to keep keys compact.
+ */
+export function buildCacheKey(...segments: string[]): string {
+  const raw = segments.join('|');
+  let hash = 5381;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) + hash + raw.charCodeAt(i)) >>> 0;
+  }
+  return `vc-${hash.toString(36)}`;
+}
+
+/**
+ * Stores a value in the AI response cache with FIFO eviction.
+ */
+function cacheSet(key: string, value: string): void {
+  if (aiResponseCache.size >= AI_CACHE_MAX_SIZE) {
+    // FIFO eviction: delete the first (oldest) entry
+    const oldestKey = aiResponseCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      aiResponseCache.delete(oldestKey);
+    }
+  }
+  aiResponseCache.set(key, value);
+}
 
 // ─── API Key Management ────────────────────────────────────────────────────
 
@@ -368,12 +411,21 @@ export async function generatePersonalizedIdeas(
   customPrompt?: string,
 ): Promise<PersonalizedIdea[]> {
   const apiKey = getApiKey();
+  const cacheKey = buildCacheKey('ideas', project.vertical, project.title, String(project.totalBudget), customPrompt ?? '');
+
+  // O(1) cache hit — bypass network entirely
+  const cached = aiResponseCache.get(cacheKey);
+  if (cached) {
+    const parsed = parseIdeasResponse(cached, project.vertical);
+    if (parsed.length > 0) return parsed;
+  }
 
   if (apiKey) {
     try {
       const sanitizedPrompt = customPrompt ? sanitizeUserInput(customPrompt) : '';
       const prompt = buildIdeasPrompt(project, sanitizedPrompt);
       const raw = await callGemini(prompt, apiKey);
+      cacheSet(cacheKey, raw); // store for O(1) reuse
       const parsed = parseIdeasResponse(raw, project.vertical);
       if (parsed.length > 0) return parsed;
     } catch (error) {
@@ -397,13 +449,22 @@ export async function draftVendorNegotiationMessage(
   vendor: VendorChecklistItem,
   goal: 'discount' | 'scope-check' | 'contract-followup',
 ): Promise<string> {
+  const cacheKey = buildCacheKey('vendor', project.title, vendor.vendorName, goal);
+
+  // O(1) cache hit
+  const cached = aiResponseCache.get(cacheKey);
+  if (cached && cached.trim().length > 50) return cached;
+
   const apiKey = getApiKey();
 
   if (apiKey) {
     try {
       const prompt = buildVendorPrompt(project, vendor, goal);
       const message = await callGemini(prompt, apiKey);
-      if (message.trim().length > 50) return message;
+      if (message.trim().length > 50) {
+        cacheSet(cacheKey, message);
+        return message;
+      }
     } catch (error) {
       console.warn('[Vesta AI] Gemini call failed for vendor message, using local fallback:', error);
     }
@@ -436,6 +497,14 @@ export async function askContextAssistant(
   userQuery: string,
 ): Promise<AssistantResponse> {
   const sanitized = sanitizeUserInput(userQuery);
+  const cacheKey = buildCacheKey('assistant', project.title, sanitized);
+
+  // O(1) cache hit
+  const cached = aiResponseCache.get(cacheKey);
+  if (cached && cached.trim().length > 20) {
+    return { reply: cached, engineMode: 'gemini-live' };
+  }
+
   const apiKey = getApiKey();
 
   if (apiKey) {
@@ -443,6 +512,7 @@ export async function askContextAssistant(
       const prompt = buildAssistantPrompt(project, sanitized);
       const reply = await callGemini(prompt, apiKey);
       if (reply.trim().length > 20) {
+        cacheSet(cacheKey, reply);
         return { reply, engineMode: 'gemini-live' };
       }
     } catch (error) {
