@@ -29,12 +29,12 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
   onAddCategory,
   onUpdateContext,
 }) => {
-  const [priorityFocus, setPriorityFocus] = useState<string>('Balanced');
+  const [priorityFocus, setPriorityFocus] = useState<string>('balanced');
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
 
   const handleRunRebalance = () => {
     onUpdateContext({
-      priorityFocus: priorityFocus === 'Balanced' ? undefined : priorityFocus,
+      priorityFocus: priorityFocus === 'balanced' ? undefined : priorityFocus,
     });
   };
 
@@ -79,6 +79,7 @@ export const BudgetArchitect: React.FC<BudgetArchitectProps> = ({
         {/* Add Category Form Drawer */}
         <AddCategoryDrawer
           isOpen={isAddFormOpen}
+          currency={project.currency}
           onClose={() => setIsAddFormOpen(false)}
           onAddCategory={onAddCategory}
         />

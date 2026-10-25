@@ -63,7 +63,7 @@ export const CuratedPaletteSwatches: React.FC<CuratedPaletteSwatchesProps> = ({ 
                 className="w-full h-12 rounded-xl shadow-inner border border-white/10 group-hover:scale-105 transition-transform flex items-end justify-end p-1.5"
                 style={{ backgroundColor: swatch.hex }}
               >
-                <span className="p-1 rounded-md bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className={`p-1 rounded-md bg-black/50 backdrop-blur-sm text-white transition-opacity ${isCopied ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                   {isCopied ? <Check className="w-3 h-3 text-vesta-success" /> : <Copy className="w-3 h-3" />}
                 </span>
               </div>

@@ -10,12 +10,15 @@ export const SpeechCopywriterCard: React.FC<SpeechCopywriterCardProps> = ({ proj
   const [copywriterMode, setCopywriterMode] = useState<'invitation' | 'toast'>('invitation');
   const [copiedCopyText, setCopiedCopyText] = useState(false);
 
-  const formattedDate = new Date(project.date).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const dateObj = project.date.includes('T') ? new Date(project.date) : new Date(`${project.date}T12:00:00`);
+  const formattedDate = isNaN(dateObj.getTime())
+    ? project.date
+    : dateObj.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
 
   const generatedInvitationText =
     project.vertical === 'wedding'

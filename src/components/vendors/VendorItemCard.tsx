@@ -89,7 +89,7 @@ export const VendorItemCard: React.FC<VendorItemCardProps> = ({
         <div>
           <span className="text-[10px] text-vesta-muted block">Committed Actual</span>
           <span className="font-mono text-xs font-bold text-vesta-rose">
-            {currency} {vendor.actualCost.toLocaleString()}
+            {currency} {(vendor.actualCost ?? vendor.estimatedCost).toLocaleString()}
           </span>
         </div>
 

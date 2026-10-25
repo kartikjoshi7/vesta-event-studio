@@ -102,7 +102,7 @@ export function useVendorDomain(
         contactEmail: sanitizeUserInput(vendor.contactEmail, 80),
         notes: sanitizeUserInput(vendor.notes, 200),
         estimatedCost: Math.max(0, vendor.estimatedCost),
-        actualCost: Math.max(0, vendor.actualCost),
+        actualCost: vendor.actualCost !== undefined ? Math.max(0, vendor.actualCost) : undefined,
       };
 
       updateActiveProject((current) => ({

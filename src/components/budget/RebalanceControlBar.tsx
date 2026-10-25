@@ -17,11 +17,12 @@ export const RebalanceControlBar: React.FC<RebalanceControlBarProps> = ({
   onRunRebalance,
 }) => {
   const priorityFocusOptions = [
-    { label: 'Balanced Optimization', value: 'Balanced' },
+    { label: 'Balanced Optimization', value: 'balanced' },
     { label: 'Culinary & Catering Focus', value: 'catering' },
-    { label: 'Guest Experience & Decor', value: 'venue' },
+    { label: 'Venue & Production Focus', value: 'venue' },
+    { label: 'Photography & Media Focus', value: 'photography' },
+    { label: 'Entertainment & Music Focus', value: 'entertainment' },
     { label: 'Strict Cost Saving', value: 'cost-reduction' },
-    { label: 'Media & Production Focus', value: 'photography' },
   ];
 
   return (

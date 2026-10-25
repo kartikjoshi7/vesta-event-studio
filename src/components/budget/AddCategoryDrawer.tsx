@@ -8,12 +8,14 @@ import { sanitizeUserInput, validateNumberInput } from '../../utils/security';
 
 interface AddCategoryDrawerProps {
   isOpen: boolean;
+  currency?: string;
   onClose: () => void;
   onAddCategory: (name: string, allocated: number, priority: 'high' | 'medium' | 'low') => void;
 }
 
 export const AddCategoryDrawer: React.FC<AddCategoryDrawerProps> = ({
   isOpen,
+  currency = '₹',
   onClose,
   onAddCategory,
 }) => {
@@ -65,7 +67,7 @@ export const AddCategoryDrawer: React.FC<AddCategoryDrawerProps> = ({
 
         <div>
           <label htmlFor="new-cat-amount" className="block text-[11px] font-medium text-vesta-muted mb-1">
-            Allocated Amount (₹)
+            Allocated Amount ({currency})
           </label>
           <input
             id="new-cat-amount"
